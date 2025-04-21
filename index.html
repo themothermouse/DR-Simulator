@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPDR Simulator Deluxe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <h1>RuPaul's Drag Race Simulator</h1>
+            <p class="subtitle">Start Your Engines!</p>
+        </header>
+
+
+        <!-- ===================== -->
+        <!-- ==== Setup Screen ==== -->
+        <!-- ===================== -->
+        <div id="setup-screen" class="screen">
+            <div class="screen-header">
+                <h2>Season Setup</h2>
+                <p>Configure your season and select the queens.</p>
+            </div>
+
+            <!-- == General Settings Section == -->
+            <section class="setup-section settings-section">
+                <h3 class="section-title"><span class="icon">⚙️</span> General Settings</h3>
+                <div class="setup-options">
+                    <div class="option-group">
+                        <label for="simulation-mode">Game Mode:</label>
+                        <select id="simulation-mode" class="styled-select">
+                            <option value="simulation">Simulation</option>
+                            <option value="rupaul">RuPaul Mode</option>
+                            <option value="trackRecord">View Track Record Only</option>
+                            <option value="allstars">All Stars Rules (LSFYLegacy)</option>
+                            <option value="allstars10" selected>All Stars 10 Rules (MQP)</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label for="premiere-format">Premiere Format:</label>
+                        <select id="premiere-format" class="styled-select">
+                            <option value="Normal" selected>Normal Premiere</option>
+                            <option value="Split">Split Premiere (LSFYW)</option>
+                            <option value="TalentShowNonElim">Talent Show (Non-Elim)</option>
+                        </select>
+                    </div>
+                     <div class="option-group">
+                        <label for="finale-format">Finale Format:</label>
+                        <select id="finale-format" class="styled-select">
+                            <option value="LSFTC" selected>Lipsync For The Crown (Top 4)</option>
+                            <option value="Top3">Top 3 Finale (Judged)</option>
+                        </select>
+                    </div>
+                     <div class="option-group riggory-group">
+                        <label for="riggory-level">Riggory Influence:</label>
+                        <div class="range-container">
+                            <input type="range" id="riggory-level" min="0" max="10" value="7">
+                            <span id="riggory-value" class="range-value">7</span>
+                        </div>
+                    </div>
+                    <!-- Checkbox toggles -->
+                     <div class="option-group checkbox-group">
+                         <label for="toggle-challenge-selection">
+                             <input type="checkbox" id="toggle-challenge-selection" name="toggle-challenge-selection">
+                             <span class="toggle-switch"></span> 
+                             Enable Manual Challenge Selection?
+                         </label>
+                         <small>(Requires "Simulation" or "All Stars" mode)</small>
+                     </div>
+                    <div class="option-group checkbox-group">
+                         <label for="toggle-bandokadont-twist">
+                             <input type="checkbox" id="toggle-bandokadont-twist" name="toggle-bandokadont-twist">
+                             <span class="toggle-switch"></span> 
+                             Enable Bandokadont™ Twist?
+                         </label>
+                         <small>(Attempts 2 non-eliminations)</small>
+                     </div>
+
+                </div>
+            </section> <!-- End General Settings -->
+
+            <hr class="section-divider">
+
+            <!-- == Cast Selection Section == -->
+            <section class="setup-section cast-section">
+                <h3 class="section-title"><span class="icon">👑</span> Cast Selection</h3>
+                <div id="cast-selection-buttons">
+                    <!-- Predefined Cast Buttons loaded here by JS -->
+                </div>
+                <!-- Moved Clear Selection button here -->
+                 <button id="clear-cast-button" class="control-button danger small-button">Clear Selection</button>
+                <p class="section-description">Or select your queens individually below (Minimum <span class="min-req"> <span id="min-queens-display">8</span></span><span class="as10-req hidden">exactly <span class="min-queens-as10">18</span></span>)</p>
+            </section> <!-- End Cast Selection -->
+
+             <!-- == Queen Grid Section == -->
+            <section class="setup-section queen-grid-section">
+                <div id="queen-selection-grid" class="queen-grid">
+                    <!-- Queen selectors will be loaded here by JS -->
+                </div>
+            </section> <!-- End Queen Grid -->
+
+            <!-- == Setup Footer == -->
+            <footer class="screen-footer selection-footer">
+                 <p id="selected-count">Selected: 0</p>
+                 <button id="start-season-button" class="action-button" disabled>Start Season</button>
+            </footer>
+        </div> <!-- End Setup Screen -->
+
+
+        <!-- ==================== -->
+        <!-- ==== Game Screen ==== -->
+        <!-- ==================== -->
+        <div id="game-screen" class="screen hidden">
+             <div class="screen-header game-header">
+                <!-- AS10 / Split Format Info Box -->
+                <div id="format-info-box" class="format-info-box hidden">
+                    <!-- Content populated by JS -->
+                </div>
+                <h2 id="episode-title">Episode X</h2>
+                <p>Remaining Queens: <span id="remaining-queens-count">N/A</span></p>
+             </div>
+
+            <!-- Active Queens Bar -->
+            <div id="active-queens-display-container" class="hidden"> 
+                <h4>Competing Queens:</h4>
+                 <div id="active-queens-display" class="active-queens-display">
+                    <!-- Small active queen cards will be displayed here -->
+                </div>
+            </div>
+
+            <!-- Main Challenge Area -->
+            <section class="main-challenge-area">
+                <h3 id="challenge-announcement">Challenge: Awaiting Assignment...</h3>
+                <p id="challenge-description" class="hidden"></p> <!-- For challenge descriptions -->
+            </section>
+<!-- RuPaul Low Save Choice (NEW UI) -->
+<div id="rupaul-low-save-selection" class="interaction-box ru-interaction-box hidden">
+    <h4 class="interaction-title"><span class="icon">🛡️</span> RuPaul, Save One Queen...</h4>
+    <p>Calculated Bottom Performers: The following queens are in danger.</p>
+    <p>Select <strong>one</strong> queen to be SAFE (LOW placement). The other two will lipsync.</p>
+    <div id="low-save-choice-options" class="choice-card-container">
+       <!-- Low choice cards loaded here -->
+    </div>
+    <div class="interaction-options center-content">
+        <button id="confirm-low-save-button" class="action-button">Confirm Save</button>
+    </div>
+</div>
+            <!-- Optional Manual Challenge Selector -->
+            <div id="challenge-selector-ui" class="challenge-interaction interaction-box hidden">
+                <h4 class="interaction-title"><span class="icon">🎯</span> Select the Maxi Challenge</h4>
+                <p>Competing: <span id="challenge-participants-count">0</span> queens - <span id="challenge-participants-list" class="participant-list"></span></p>
+                <div id="challenge-options-list" class="challenge-options">
+                    <!-- Challenge buttons populated here -->
+                </div>
+                <p id="challenge-error-message" class="error-message"></p>
+                <button id="confirm-challenge-button" class="action-button">Confirm Challenge</button> 
+            </div>
+
+            <!-- RuPaul Winner Selection (Optional) -->
+            <div id="rupaul-winner-selection" class="interaction-box ru-interaction-box hidden">
+                <h4 class="interaction-title"><span class="icon">⭐</span> RuPaul, Choose the Winner(s)...</h4>
+                <p>Calculated Top Performer: <strong id="calculated-winner-name"></strong></p>
+                <div id="winner-choice-options" class="choice-card-container">
+                    <!-- Winner choice cards loaded here -->
+                </div>
+                <div class="interaction-options">
+                    <div class="checkbox-group">
+                         <label for="rupaul-double-win-checkbox">
+                             <input type="checkbox" id="rupaul-double-win-checkbox" name="rupaul-double-win-checkbox">
+                             <span class="toggle-switch"></span>
+                             Make it a Double Win?
+                         </label>
+                    </div>
+                    <button id="confirm-winner-button" class="action-button">Confirm Winner(s)</button> 
+                </div>
+            </div>
+
+            <!-- AS10 UI Elements -->
+            <div id="merge-announcement-ui" class="announcement-box hidden">
+                <h4><span id="merge-group-name">Group X</span> Merge Qualifiers!</h4>
+                <p>The following queens have earned the most points and advance to the merge:</p>
+                <p id="merge-qualifiers-list"></p>
+            </div>
+
+             <div id="mqp-distribution-ui" class="interaction-box hidden">
+                <h3 id="mqp-title" class="interaction-title"><span class="icon">🪙</span> My Queen Points Donation</h3>
+                <div id="mqp-donor-info-wrapper" style="margin-bottom: 15px; text-align: center; min-height: 4em;">
+                    <p id="mqp-donor-info" style="font-size: 1.1em; font-weight: 500;">Preparing donations...</p>
+                    <p id="mqp-recipient-info" style="font-size: 0.9em; color: #555; margin-top: 5px;">Eligible queens in their group:</p>
+                </div>
+                <div id="mqp-choice-options" class="choice-card-container slim-gap">
+                    <!-- Recipient queen cards loaded here -->
+                </div>
+                <div id="mqp-donation-log" class="hidden" style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-top: 15px; background: #f9f9f9;">
+                    <h4>Donation Log:</h4>
+                    <ul></ul>
+                </div>
+                <button id="confirm-mqp-button" class="action-button hidden" style="margin-top: 15px;">Next Donation (Auto)</button>
+             </div>
+
+<!-- ==== RuPaul Riggory Choice (NEW UI) ==== -->
+<div id="rupaul-riggory-selection" class="interaction-box ru-interaction-box hidden">
+    <h4 class="interaction-title"><span class="icon">🎬</span> Producer Intervention: Riggory Time!</h4>
+    <p id="riggory-challenge-info">Applying intervention for challenge: <strong class="challenge-name-placeholder">Loading...</strong></p>
+    <p class="instruction-text">Optionally, select <strong>ONE</strong> queen to either <strong>Favor</strong> (boost <span class="favor-icon">👍</span>) or <strong>Penalize</strong> (nerf <span class="penalty-icon">👎</span>) for this challenge only. Click "Confirm/Continue" when ready.</p>
+    <div id="riggory-choice-options" class="choice-card-container riggory-gap">
+       <!-- Riggable queen cards loaded here by JS -->
+    </div>
+    <div class="interaction-options center-content">
+        <button id="confirm-riggory-button" class="action-button primary">Confirm / Continue</button>
+    </div>
+    <p id="riggory-selection-status" class="selection-status-text"></p> <!-- Feedback -->
+</div>
+<!-- ==== End Riggory Choice ==== -->
+            <!-- Episode Results (Grid + Critiques) -->
+            <div id="results-display" class="results-display hidden">
+                <h3 class="results-title">Episode Results</h3>
+                <div class="results-grid">
+                   <!-- Results category columns (WIN, HIGH, etc.) will be populated here -->
+                </div>
+                <!-- Detailed Critiques Section -->
+                <div id="results-critiques-section" class="results-critiques-section">
+                   <!-- Critiques populated here -->
+                </div>
+            </div>
+
+
+            <!-- Lipsync / LaLa / Outcome Area -->
+            <div id="lipsync-info" class="interaction-box hidden">
+                <h3 id="lipsync-title" class="interaction-title"><span class="icon">🎤</span> Lipsync For Your...!</h3>
+
+                <!-- LaLaPaRuza nested inside for context -->
+                <div id="lalaparuza-ui" class="interaction-box hidden" style="background: #fff;"> {/* Style slightly different if needed */}
+                    <h3 id="lalaparuza-title" class="interaction-title"><span class="icon">💥</span> LaLaPaRUza Smackdown!</h3>
+                    <div id="lalaparuza-round-display" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+                        <!-- Matchup results populated here -->
+                    </div>
+                    <p id="lalaparuza-winner-announcement" class="final-outcome-text"></p>
+                </div>
+
+                <!-- Contestants Display (LSFYL, LSFYLegacy) -->
+                <div id="lipsync-contestants" class="choice-card-container vs-container" style="margin-top: 15px;">
+                    <!-- Contestant cards loaded here -->
+                </div>
+
+                <!-- All Stars Specific: LSFYL Winner Announce -->
+                <div id="lsfyl-winner-announcement" class="announcement-box hidden">
+                   <p>The Winner of the Lipsync For Your Legacy is...</p>
+                   <p class="winner-name"><span id="lsfyl-winner-name"></span>!</p>
+                </div>
+
+                <!-- All Stars Specific: Elimination Choice -->
+               <div id="allstars-elimination-choice" class="sub-interaction-box hidden">
+                   <h4 class="interaction-title small-title"><span id="allstars-chooser-name">Winner</span>, who gets the chop?</h4>
+                   <div id="elimination-choice-options" class="choice-card-container slim-gap">
+                       <!-- Bottom queen cards for elimination choice -->
+                   </div>
+                   <div class="center-content interaction-options">
+                        <button id="confirm-allstars-elim-button" class="control-button elim-button">Confirm Elimination</button>
+                   </div>
+               </div>
+
+               <!-- Normal Mode LSFYL: RuPaul Decision -->
+                <div id="rupaul-decision" class="sub-interaction-box hidden">
+                    <h4 class="interaction-title small-title">RuPaul, make your decision...</h4>
+                    <div id="lipsync-choice-options" class="choice-card-container slim-gap">
+                        <!-- Shantay choice cards loaded here -->
+                    </div>
+                    <div id="double-shantay-option" class="center-content interaction-options">
+                        <!-- Double Shantay button loaded here -->
+                    </div>
+                </div>
+
+                <!-- Universal Lipsync Outcome Text -->
+                <p id="lipsync-result-text" class="final-outcome-text" style="margin-top: 20px;"></p>
+            </div>
+
+            <!-- General Episode Outcome Text -->
+            <p id="outcome-text" class="final-outcome-text episode-outcome hidden"></p>
+
+
+            <!-- == Navigation == -->
+             <footer class="screen-footer navigation-buttons">
+                 <button id="view-track-record-mid-button" class="control-button secondary">View Track Record</button>
+                 <button id="next-episode-button" class="action-button hidden">Next Episode</button>
+                 <button id="finish-season-button" class="action-button primary hidden">Show Final Results</button>
+                 <button id="restart-button" class="control-button danger">Restart Simulation</button>
+            </footer>
+        </div> <!-- End Game Screen -->
+
+
+        <!-- =========================== -->
+        <!-- ==== Track Record Screen ==== -->
+        <!-- =========================== -->
+        <div id="track-record-screen" class="screen hidden">
+             <div class="screen-header">
+                 <h2>Season Track Record</h2>
+             </div>
+            <div class="track-record-container">
+                <table id="track-record-table">
+                    <thead id="track-record-header">
+                        <!-- Header generated by JS -->
+                    </thead>
+                    <tbody id="track-record-body">
+                        <!-- Rows generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+             <footer class="screen-footer navigation-buttons">
+                <button id="back-to-game-button" class="control-button secondary hidden">Back to Game</button>
+                <button id="restart-from-track-record-button" class="control-button danger">Start New Simulation</button>
+            </footer>
+        </div> <!-- End Track Record Screen -->
+
+
+        <!-- ============================= -->
+        <!-- ==== Final Results Screen ==== -->
+        <!-- ============================= -->
+        <div id="final-results-screen" class="screen hidden">
+            <div class="screen-header">
+                 <h2>Season Finale!</h2>
+             </div>
+            <div id="winner-announcement" class="winner-announcement">
+                 <p class="reveal-text">Ladies, the time has come...</p>
+                 <p class="reveal-text">America's Next Drag Superstar is...</p>
+                 <div class="winner-reveal">
+                    <img id="winner-img" src="" alt="Season Winner">
+                    <h2 id="winner-name"></h2>
+                </div>
+                <p class="final-words">Condragulations, you're a winner, baby!</p>
+            </div>
+            <div id="finalists-display" class="finalists-display hidden"> 
+                 <h4 id="finalists-title"></h4>
+                 <p id="finalists-names"></p>
+             </div>
+             <footer class="screen-footer navigation-buttons">
+                 <button id="view-final-track-record-button" class="control-button secondary">View Final Track Record</button>
+                 <button id="start-new-season-button" class="action-button primary">Start New Season</button>
+            </footer>
+        </div> <!-- End Final Results Screen -->
+
+    </div> <!-- End Container -->
+
+    <script src="script.js"></script>
+</body>
+</html>
