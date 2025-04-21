@@ -2194,19 +2194,23 @@ function generateVisualTrackRecord(trackRecordArray, limit = 7) {
 // Incorporates challenge description, dynamic focus, and critiques display.
 // Replaces the ENTIRE existing runNextEpisodeStep function.
 
-async function runNextEpisodeStep(userInitiated = false) {
+// COMPLETE FUNCTION: runNextEpisodeStep (V11 - Async & Awaits processElimination)
+async function runNextEpisodeStep(userInitiated = false) { // <-- Added async
     // --- 1. Initial Setup & Clear State ---
-    const stepContextIdentifier = `MODE: ${gameMode} | EP: ${currentEpisode} | ${gameMode==='allstars10'?`GROUP:${allStars10_currentGroup||'N/A'}(${allStars10_groupEpisode}/3)`:`STAGE:${splitPremiereStage||'Normal'}`}`;
-    console.log(`%c START runNextEpisodeStep (V10 Lipsync Fix) for: ${stepContextIdentifier}`, 'color: blue; font-weight: bold;');
+    document.getElementById('merge-qualifier-popup')?.classList.add('hidden'); // Hide potential lingering popup
 
-    // --- Hide UI / Clear State ---
+    const stepContextIdentifier = `MODE: ${gameMode} | EP: ${currentEpisode} | ${gameMode==='allstars10'?`GROUP:${allStars10_currentGroup||'N/A'}(${allStars10_groupEpisode}/3)`:`STAGE:${splitPremiereStage||'Normal'}`}`;
+    console.log(`%c START runNextEpisodeStep (V11 - Async) for: ${stepContextIdentifier}`, 'color: blue; font-weight: bold;');
+
+    // --- Hide UI / Clear State (No change needed here) ---
     nextEpisodeButton.disabled = true; nextEpisodeButton.classList.add('hidden'); viewTrackRecordMidButton.disabled = true;
     outcomeText.textContent = ''; outcomeText.classList.add('hidden');
     lipsyncInfo.classList.add('hidden'); rupaulDecision.classList.add('hidden'); rupaulWinnerSelectionUI.classList.add('hidden');
     document.getElementById('lsfyl-winner-announcement')?.classList.add('hidden'); document.getElementById('allstars-elimination-choice')?.classList.add('hidden');
     document.getElementById('challenge-selector-ui')?.classList.add('hidden'); document.getElementById('mqp-distribution-ui')?.classList.add('hidden');
-    document.getElementById('merge-announcement-ui')?.classList.add('hidden'); document.getElementById('lalaparuza-ui')?.classList.add('hidden');
-    document.getElementById('format-info-box').classList.add('hidden'); document.getElementById('challenge-description')?.classList.add('hidden');
+    /* MERGE UI IS REMOVED as it's handled by popup now: document.getElementById('merge-announcement-ui')?.classList.add('hidden'); */
+    document.getElementById('lalaparuza-ui')?.classList.add('hidden'); document.getElementById('format-info-box').classList.add('hidden');
+    document.getElementById('challenge-description')?.classList.add('hidden');
     document.getElementById('rupaul-low-save-selection')?.classList.add('hidden');
     document.getElementById('rupaul-riggory-selection')?.classList.add('hidden');
     document.getElementById('results-display')?.classList.add('hidden');
@@ -2218,143 +2222,77 @@ async function runNextEpisodeStep(userInitiated = false) {
     isNonEliminationChallenge=false;skipChallengeScoring=false;lowSaveResolver=null;preliminaryBottomQueens=[];
     episodeRiggoryActions.clear(); riggoryResolver=null;
 
-    // --- 2. Pre-computation Checks ---
+    // --- 2. Pre-computation Checks (No change) ---
     if(!queens||queens.length===0){console.error("No Q! Reset.");resetToSetup();return;}
 
-    // --- 3. Determine Context ---
+    // --- 3. Determine Context (No change) ---
     let activeQueensForStep = []; let stepTitle = `Episode ${currentEpisode}`; let currentProcessingContext;
-    const originalPremiereStage = splitPremiereStage; // Capture original stage
+    const originalPremiereStage = splitPremiereStage;
     const as10Phase=(gameMode==='allstars10')?getAS10Phase(currentEpisode):null;const formatInfoBox=document.getElementById('format-info-box');
-    // Context setting logic (no changes needed here)
     if(gameMode==='allstars10'){const gN=allStars10_currentGroup;currentProcessingContext=`AS10_${as10Phase}`;formatInfoBox.classList.remove('hidden');if(as10Phase==='PRE_MERGE'){if(!gN||!allStars10_groups[gN]){console.error(`AS10 Err:Gr ${gN}`);resetToSetup();return}activeQueensForStep=queens.filter(q=>allStars10_groups[gN].includes(q.id)&&q.isActive);stepTitle=`Gr ${gN} Ep ${allStars10_groupEpisode}`;isNonEliminationChallenge=true;formatInfoBox.innerHTML=`Comp: <strong>Gr ${gN}</strong>(Ep ${allStars10_groupEpisode}/3) MQP`}else if(as10Phase==='PRE_LALA'){currentProcessingContext='AS10_PRE_LALA';stepTitle=`Ep ${currentEpisode}:Pre-Merge LaLa!`;activeQueensForStep=queens.filter(q=>allStars10_nonQualifiers_IDs.has(q.id)&&q.isActive);isNonEliminationChallenge=true;skipChallengeScoring=true;formatInfoBox.innerHTML=`<strong>LaLa!</strong> 1 merges`}else if(as10Phase==='MERGE'){stepTitle=`Ep ${currentEpisode}: Merge!`;activeQueensForStep=queens.filter(q=>q.isActive);isNonEliminationChallenge=false;formatInfoBox.innerHTML=`<strong>Merge!</strong> LSFYL`}else if(as10Phase==='FINALE'){currentProcessingContext='AS10_FINALE_LALA';stepTitle=`Finale:Top 6 LaLa!`;activeQueensForStep=queens.filter(q=>q.isActive);isNonEliminationChallenge=true;skipChallengeScoring=true;allStars10_finalLalaparuzaStage=true;formatInfoBox.innerHTML=`<strong>FINALE LaLa!</strong>`}else{console.error(`AS10 Err:Ph ${as10Phase}`);resetToSetup();return}}
     else if(originalPremiereStage==='A_Perf'||originalPremiereStage==='B_Perf'){currentProcessingContext='PREMIERE_GROUP';const grp=originalPremiereStage==='A_Perf'?'A':'B';activeQueensForStep=queens.filter(q=>(originalPremiereStage==='A_Perf'?splitPremiereGroupA_IDs:splitPremiereGroupB_IDs).includes(q.id)&&q.isActive);stepTitle=`Prem Pt ${grp==='A'?1:2}:Gr ${grp}(Ep ${currentEpisode})`;isNonEliminationChallenge=true;formatInfoBox.innerHTML=`Comp: <strong>Gr ${grp}</strong>`;formatInfoBox.classList.remove('hidden');}
     else if(gameMode==='allstars'){currentProcessingContext='ALLSTARS';stepTitle=`Ep ${currentEpisode}(AS)`;activeQueensForStep=queens.filter(q=>q.isActive);isNonEliminationChallenge=false;formatInfoBox.innerHTML=`<strong>AS Rules:</strong> LSFYL`;formatInfoBox.classList.remove('hidden');}
     else{currentProcessingContext='NORMAL';stepTitle=`Ep ${currentEpisode}`;activeQueensForStep=queens.filter(q=>q.isActive);if(premiereFormat==='TalentShowNonElim'&currentEpisode===1){isNonEliminationChallenge=true;formatInfoBox.innerHTML=`<strong>Talent Show!</strong>(Non-Elim)`;formatInfoBox.classList.remove('hidden');}else{formatInfoBox.classList.add('hidden');isNonEliminationChallenge=false;}}
     currentStepContext = currentProcessingContext; console.log(`[Debug] StepContext: ${currentStepContext}`);
 
-    // --- 4. Update Core UI ---
+    // --- 4. Update Core UI (No change) ---
     episodeTitle.textContent=stepTitle;const totalActive=queens.filter(q=>q.isActive).length;remainingQueensCount.textContent=totalActive;
     updateActiveQueensDisplay((['PREMIERE_GROUP','AS10_PRE_MERGE'].includes(currentProcessingContext)) ? activeQueensForStep : null, gameMode==='allstars10');
     if(activeQueensForStep.length<=0&&!isFinale&&!['AS10_PRE_LALA','AS10_FINALE_LALA'].includes(currentProcessingContext)){console.error(`No active Q! Reset.`);resetToSetup();return;}
 
-    // --- 5. Finale Check (Std Modes) ---
+    // --- 5. Finale Check (Std Modes) (No change) ---
     if(gameMode!=='allstars10'){let fTC=(finaleFormat==='LSFTC'?4:3);if(gameMode==='allstars')fTC=4;if(initialCastSize<=fTC)fTC=Math.max(2,initialCastSize);const chkFin=(currentProcessingContext!=='PREMIERE_GROUP'&&!isFinale);if(chkFin&&(totalActive<=fTC||currentEpisode>maxEpisodesCeiling)){console.log(`FINALE! Std.`);isFinale=true;runFinale(queens.filter(q=>q.isActive));return;}if(isFinale&&gameMode!=='allstars10'){console.log(`Std Finale triggered.`);return;}}
 
-    // --- 6. Immunity Reset (Std Modes) ---
+    // --- 6. Immunity Reset (Std Modes) (No change) ---
     if(gameMode!=='allstars10'&currentEpisode>1&currentProcessingContext!=='PREMIERE_GROUP'){let immR=false;if(currentEpisode===2&&premiereFormat==='TalentShowNonElim')immR=true;if(immR)queens.forEach(q=>{if(q.isImmune){q.isImmune=false;console.log(`Immun reset ${q.name}`)}});}
-
-    // --- 7. Select Challenge ---
+    // --- 7. Select Challenge (No change) ---
     let challengeWasSelected=false;if(!skipChallengeScoring){try{console.log("Select challenge...");let allowManual=isManualChallengeSelectionEnabled&&['simulation','allstars10'].includes(gameMode);if(['PREMIERE_GROUP','ALLSTARS','AS10_PRE_MERGE'].includes(currentProcessingContext)){allowManual=false;console.log(`>Man disabled:${currentProcessingContext}`)}if(allowManual){currentChallenge=await promptChallengeSelection(activeQueensForStep);}else{currentChallenge=getChallengeForEpisode(currentEpisode,activeQueensForStep,originalPremiereStage);console.log(`>Auto/Seq Sel:${currentChallenge?.name||'ERR'}`)}if(!currentChallenge)throw new Error("No challenge!");
-        if(currentChallenge.primaryStat==="DYNAMIC"){ // Dynamic Focus Logic Start
-             if(currentChallenge.possibleFocuses?.length > 0){
-                 currentDynamicFocus = currentChallenge.possibleFocuses[Math.floor(Math.random()*currentChallenge.possibleFocuses.length)];
-                 console.log(`Dynamic Focus:${currentDynamicFocus}`);
-             } else {
-                 console.error(`${currentChallenge.name} DYNAMIC focus options missing!`);
-                 const cS=["charisma","lipsync","comedy","dance"]; // Fallback focus types
-                 currentDynamicFocus = cS[Math.floor(Math.random()*cS.length)];
-                 console.warn(`Fallback DFocus:${currentDynamicFocus}`);
-             }
-         } else { // Non-Dynamic
-             currentDynamicFocus=null;
-         } // Dynamic Focus Logic End
-         updateChallengeAnnouncement(currentChallenge,currentDynamicFocus);console.log(`>Chal Confirmed:${currentChallenge.name}${currentDynamicFocus?`(${currentDynamicFocus})`:''}`);
-         /*Log*/const logId=`${currentEpisode}-${allStars10_currentGroup||originalPremiereStage||'Normal'}`;if(!seasonLog.some(l=>`${l.episode}-${l.as10_group||l.stage||'Normal'}`===logId))seasonLog.push({episode:currentEpisode,as10_group:allStars10_currentGroup,as10_group_ep:allStars10_groupEpisode,stage:originalPremiereStage,challenge:currentChallenge.name,type:currentChallenge.type,focus:currentDynamicFocus});
-         challengeWasSelected=true;}catch(error){console.error("Chal select err:",error);resetToSetup();return;}}else{challengeAnnouncement.textContent=`Event:${stepTitle}`;document.getElementById('challenge-description')?.classList.add('hidden');challengeWasSelected=false;}
+        if(currentChallenge.primaryStat==="DYNAMIC"){if(currentChallenge.possibleFocuses?.length > 0){currentDynamicFocus = currentChallenge.possibleFocuses[Math.floor(Math.random()*currentChallenge.possibleFocuses.length)];console.log(`Dynamic Focus:${currentDynamicFocus}`);}else{console.error(`${currentChallenge.name} DYNAMIC focus options missing!`);const cS=["charisma","lipsync","comedy","dance"];currentDynamicFocus = cS[Math.floor(Math.random()*cS.length)];console.warn(`Fallback DFocus:${currentDynamicFocus}`);}}else{currentDynamicFocus=null;}updateChallengeAnnouncement(currentChallenge,currentDynamicFocus);console.log(`>Chal Confirmed:${currentChallenge.name}${currentDynamicFocus?`(${currentDynamicFocus})`:''}`);const logId=`${currentEpisode}-${allStars10_currentGroup||originalPremiereStage||'Normal'}`;if(!seasonLog.some(l=>`${l.episode}-${l.as10_group||l.stage||'Normal'}`===logId))seasonLog.push({episode:currentEpisode,as10_group:allStars10_currentGroup,as10_group_ep:allStars10_groupEpisode,stage:originalPremiereStage,challenge:currentChallenge.name,type:currentChallenge.type,focus:currentDynamicFocus});challengeWasSelected=true;}catch(error){console.error("Chal select err:",error);resetToSetup();return;}}else{challengeAnnouncement.textContent=`Event:${stepTitle}`;document.getElementById('challenge-description')?.classList.add('hidden');challengeWasSelected=false;}
 
-    // --- 7.5 RUPAUL RIGGORY INTERVENTION ---
-    if(gameMode==='rupaul'&&challengeWasSelected&&!skipChallengeScoring&&['NORMAL','AS10_MERGE'].includes(currentProcessingContext)){console.log("[Ru]Check Riggory...");const rigQ=activeQueensForStep.filter(q=>!q.isImmune);if(rigQ.length>0){await promptRiggoryChoice(rigQ,currentChallenge.name);/*PAUSE*/}else{console.log(">No riggable Qs.");}}
+    // --- 7.5 RUPAUL RIGGORY INTERVENTION (No change) ---
+    if(gameMode==='rupaul'&&challengeWasSelected&&!skipChallengeScoring&&['NORMAL','AS10_MERGE'].includes(currentProcessingContext)){console.log("[Ru]Check Riggory...");const rigQ=activeQueensForStep.filter(q=>!q.isImmune);if(rigQ.length>0){await promptRiggoryChoice(rigQ,currentChallenge.name);}else{console.log(">No riggable Qs.");}}
 
-    // --- 8. Scoring & Placements / LaLa ---
-    if(['AS10_PRE_LALA','AS10_FINALE_LALA'].includes(currentProcessingContext)){/*LaLa Logic*/try{const type=(currentProcessingContext==='AS10_FINALE_LALA')?'FINALE':'PRE_MERGE';const wId=await runLaLaPaRuZa(activeQueensForStep,type);displayLaLaPaRuZaResults(type);if(type==='FINALE')isFinale=true;else allStars10_preMergeLalaWinnerID=wId;}catch(error){console.error(`LaLa err:${error}`)} }
-    else if(!skipChallengeScoring){/*Standard Scoring/Placements*/try{console.log("Calc scores(rig)...");calculateChallengeScores(activeQueensForStep,currentChallenge,currentDynamicFocus);
-        if(gameMode==='rupaul'&&['NORMAL','AS10_MERGE'].includes(currentProcessingContext)){console.log("[Ru]Prompt win...");const elW=activeQueensForStep.filter(q=>!q.isImmune);if(elW.length>0){await promptRuPaulWinnerChoice(elW);/*PAUSE*/determinePlacements(activeQueensForStep,currentProcessingContext);if(preliminaryBottomQueens.length===3){await promptRuPaulLowSaveChoice(preliminaryBottomQueens);/*PAUSE*/}else{preliminaryBottomQueens=[]}}else{console.warn("No elig Ru.");}}
+    // --- 8. Scoring & Placements / LaLa (No change) ---
+    if(['AS10_PRE_LALA','AS10_FINALE_LALA'].includes(currentProcessingContext)){try{const type=(currentProcessingContext==='AS10_FINALE_LALA')?'FINALE':'PRE_MERGE';const wId=await runLaLaPaRuZa(activeQueensForStep,type);if(type==='FINALE')isFinale=true;else allStars10_preMergeLalaWinnerID=wId;}catch(error){console.error(`LaLa err:${error}`)} }
+    else if(!skipChallengeScoring){try{console.log("Calc scores(rig)...");calculateChallengeScores(activeQueensForStep,currentChallenge,currentDynamicFocus);
+        if(gameMode==='rupaul'&&['NORMAL','AS10_MERGE'].includes(currentProcessingContext)){console.log("[Ru]Prompt win...");const elW=activeQueensForStep.filter(q=>!q.isImmune);if(elW.length>0){await promptRuPaulWinnerChoice(elW);determinePlacements(activeQueensForStep,currentProcessingContext);if(preliminaryBottomQueens.length===3){await promptRuPaulLowSaveChoice(preliminaryBottomQueens);}else{preliminaryBottomQueens=[]}}else{console.warn("No elig Ru.");}}
         else{determinePlacements(activeQueensForStep,currentProcessingContext);}
         console.log("Display results post-place...");displayEpisodeResults();}catch(error){console.error(`Score/Place Err:${error}`);}}else{console.log("Skip score/place");}
 
-// --- 9. Lipsyncs / Decisions / MQP ---
-    // *** CORRECTED PREMIERE GROUP HANDLING ***
+    // --- 9. Lipsyncs / Decisions / MQP (No change) ---
     console.log(` > Entering Lipsync/Decision block check (Context: ${currentProcessingContext}, OrigStage: ${originalPremiereStage})`);
-    try {
-        const top2 = episodeResults.top2 || [];
-        bottomQueens = episodeResults.btm || [];
-        bottomQueensAS = episodeResults.btm || [];
-
-        if (currentProcessingContext === 'PREMIERE_GROUP') { // Handle BOTH A_Perf and B_Perf here for LSFYW
-             console.log(`Premiere Group ${originalPremiereStage === 'A_Perf' ? 'A' : 'B'} LSFYW...`);
-             document.getElementById('lipsync-title').textContent = 'Lipsync For The WIN!';
-             if (top2.length >= 2) {
-                 lipsyncInfo.classList.remove('hidden');
-                 prepareLipsync(top2);
-                 simulateLipsyncOutcome(top2, false, true, false); // isPremiereLSFYW = true
-                 if (premiereLipsyncParticipants.length === 2) {
-                      // Important: Assign WIN/TOP2 but ONLY within episodeResults.
-                      // processElimination will handle actual TR update based on final placements.
-                      episodeResults.win = [premiereLipsyncParticipants[0]];
-                      episodeResults.top2 = [premiereLipsyncParticipants[1]];
-                      displayEpisodeResults(); // Re-display results to show LSFYW outcome
-                      console.log(` > Premiere LSFYW Winner: ${premiereLipsyncParticipants[0].name}`);
-                 } else { console.error("LSFYW simulation failed to return 2 participants."); }
-             } else if (top2.length === 1) { // Unopposed Winner in Premiere Group
-                 episodeResults.win = [top2[0]];
-                 episodeResults.top2 = []; // Clear top2 if only one winner
-                 lipsyncInfo.classList.remove('hidden'); // Still show info box
-                 prepareLipsync(top2); // Show the single winner card maybe? Or just text.
-                 document.getElementById('lipsync-contestants').innerHTML = ''; // Clear contestant cards if only 1
-                 lipsyncResultText.textContent = `Winner (Unopposed): ${episodeResults.win[0].name}!`;
-                 displayEpisodeResults(); // Re-display results
-                 console.log(` > Premiere Unopposed Winner: ${episodeResults.win[0].name}`);
-             } else {
-                  console.warn("Not enough Top 2 queens for Premiere LSFYW.");
-                  // Maybe hide lipsync box if no lipsync?
-                  lipsyncInfo.classList.add('hidden');
-             }
-             eliminatedQueenThisEpisode = null; // Explicitly no elimination in premiere
-        }
-
-            if (currentProcessingContext === 'AS10_PRE_MERGE') {
-                console.log("AS10 PreMerge LSFYL..."); document.getElementById('lipsync-title').textContent = 'LSFYLegacy!'; lipsyncInfo.classList.remove('hidden');
-                if (top2.length >= 2) { prepareLipsync(top2); simulateLipsyncOutcome(top2, false, false, true); if (lipsyncWinner) { episodeResults.win=[lipsyncWinner]; episodeResults.top2=top2.filter(q=>q.id!==lipsyncWinner.id);displayEpisodeResults();document.getElementById('lsfyl-winner-name').textContent=lipsyncWinner.name;document.getElementById('lsfyl-winner-announcement').classList.remove('hidden');const bottomGroupLS=bottomQueens;/*Assign for clarity*/if(bottomGroupLS.length > 0) { const gk = d => d.as10_group; allStars10_mqpDonationQueue = bottomGroupLS.map(d => ({ donor: d, recipients: queens.filter(q => q.as10_group === gk(d) && q.id !== d.id && q.isActive) })); console.log(`MQP Q:${allStars10_mqpDonationQueue.length} for Gr ${gk(bottomGroupLS[0])}`); await new Promise(r => { mqpDistributionResolver = r; handleAS10_MQP_Distribution(); }); console.log(`MQP Done.`); } else { console.log("No MQP Btm"); } } else { console.error("AS10 LSFYL fail!") } } else { console.warn("No Top2"); } eliminatedQueenThisEpisode = null;
-            }
-            else if (currentProcessingContext === 'ALLSTARS') {
-                console.log("Std AS LSFYL..."); document.getElementById('lipsync-title').textContent = 'LSFYLegacy!'; lipsyncInfo.classList.remove('hidden');
-                if (top2.length >= 2) { prepareLipsync(top2); simulateLipsyncOutcome(top2, false, false, false); if (lipsyncWinner) { document.getElementById('lsfyl-winner-name').textContent=lipsyncWinner.name;document.getElementById('lsfyl-winner-announcement').classList.remove('hidden');if(bottomQueensAS.length > 0) { console.log(`Prompt AS Elim`); await promptAllStarsEliminationChoice(lipsyncWinner, bottomQueensAS); } else { eliminatedQueenThisEpisode=null;console.log("No AS Btm"); } } else { console.error("Std AS LSFYL fail"); eliminatedQueenThisEpisode=null; } } else { console.warn("No Top2"); lipsyncWinner = null; eliminatedQueenThisEpisode = null; lipsyncInfo.classList.add('hidden'); }
-            }
-            else if (currentProcessingContext === 'PREMIERE_GROUP' /* && originalPremiereStage === 'B_Perf' implied */) {
-                 console.log("Prem Grp B LSFYW..."); document.getElementById('lipsync-title').textContent = 'LSFYW!';
-                 if (top2.length >= 2) { lipsyncInfo.classList.remove('hidden'); prepareLipsync(top2); simulateLipsyncOutcome(top2, false, true, false); /* Checks premiereParticipants */ if (premiereLipsyncParticipants.length === 2) { episodeResults.win=[premiereLipsyncParticipants[0]]; episodeResults.top2=[premiereLipsyncParticipants[1]]; displayEpisodeResults(); } else { console.error("LSFYW fail"); } } else if (top2.length === 1) { /* Unopposed winner logic */ episodeResults.win=[top2[0]]; episodeResults.top2=[]; lipsyncInfo.classList.remove('hidden'); lipsyncResultText.textContent=`Winner:${episodeResults.win[0].name}`; displayEpisodeResults(); } else { console.warn("No Top2 for LSFYW"); } eliminatedQueenThisEpisode = null;
-            }
-            else if (['NORMAL', 'AS10_MERGE'].includes(currentProcessingContext)) {
-                const isASMerge = currentProcessingContext === 'AS10_MERGE'; console.log(`${isASMerge?'ASMerge':'Norm'} LSFYL...`); document.getElementById('lipsync-title').textContent = 'LSFYLife!';
-                if (bottomQueens.length >= 2 && !isNonEliminationChallenge) {
-                    lipsyncInfo.classList.remove('hidden'); prepareLipsync(bottomQueens); let dShantay = false; if (currentProcessingContext === 'NORMAL') { dShantay = checkForNonEliminationTwist(bottomQueens); if(dShantay) console.log("DShantay!"); }
-                    if (!dShantay) {
-                        if (gameMode === 'simulation' || gameMode === 'allstars10') { console.log(`${isASMerge?'ASMrg Sim':'Sim'} LSFYL outcome...`); simulateLipsyncOutcome(bottomQueens, false, false, false); }
-                        else if (gameMode === 'rupaul') { console.log("Setup Ru LSFYL buttons..."); setupRuPaulLipsyncButtons(bottomQueens); viewTrackRecordMidButton.disabled=false; console.log("Wait Ru LSFYL..."); return; /*PAUSE*/ }
-                    } else { console.log("DShantay handled."); }
-                } else { /* Log skipped LSFYL */ if(isNonEliminationChallenge)console.log(`LSFYL Skip:NonElim`); else if(!bottomQueens || bottomQueens.length < 2)console.log(`LSFYL Skip:Only ${bottomQueens?.length||0} BTM`); eliminatedQueenThisEpisode=null; lipsyncInfo.classList.add('hidden'); }
-            } // End Lipsync Context Check
-        } catch(error){ console.error(`Error Lipsync/Decision Block: ${error}`); }
+    try { /* ... existing Lipsync/MQP/Ru decision logic ... */
+         const top2 = episodeResults.top2 || [];bottomQueens = episodeResults.btm || [];bottomQueensAS = episodeResults.btm || [];
+         if (currentProcessingContext === 'PREMIERE_GROUP') {console.log(`Premiere Group ${originalPremiereStage === 'A_Perf' ? 'A' : 'B'} LSFYW...`);document.getElementById('lipsync-title').textContent = 'Lipsync For The WIN!';if (top2.length >= 2) {lipsyncInfo.classList.remove('hidden');prepareLipsync(top2);simulateLipsyncOutcome(top2, false, true, false);if (premiereLipsyncParticipants.length === 2) {episodeResults.win = [premiereLipsyncParticipants[0]];episodeResults.top2 = [premiereLipsyncParticipants[1]];displayEpisodeResults();console.log(` > Premiere LSFYW Winner: ${premiereLipsyncParticipants[0].name}`);} else { console.error("LSFYW simulation failed."); }} else if (top2.length === 1) {episodeResults.win = [top2[0]];episodeResults.top2 = [];lipsyncInfo.classList.remove('hidden');prepareLipsync(top2);document.getElementById('lipsync-contestants').innerHTML = '';lipsyncResultText.textContent = `Winner (Unopposed): ${episodeResults.win[0].name}!`;displayEpisodeResults();console.log(` > Premiere Unopposed Winner: ${episodeResults.win[0].name}`);} else {console.warn("Not enough Top 2 queens for Premiere LSFYW.");lipsyncInfo.classList.add('hidden');}eliminatedQueenThisEpisode = null;}
+          if (currentProcessingContext === 'AS10_PRE_MERGE') {console.log("AS10 PreMerge LSFYL...");document.getElementById('lipsync-title').textContent = 'LSFYLegacy!';lipsyncInfo.classList.remove('hidden');if (top2.length >= 2) {prepareLipsync(top2);simulateLipsyncOutcome(top2, false, false, true);if (lipsyncWinner) {episodeResults.win=[lipsyncWinner];episodeResults.top2=top2.filter(q=>q.id!==lipsyncWinner.id);displayEpisodeResults();document.getElementById('lsfyl-winner-name').textContent=lipsyncWinner.name;document.getElementById('lsfyl-winner-announcement').classList.remove('hidden');const bottomGroupLS=bottomQueens;if(bottomGroupLS.length > 0) {const gk = d => d.as10_group; allStars10_mqpDonationQueue = bottomGroupLS.map(d => ({ donor: d, recipients: queens.filter(q => q.as10_group === gk(d) && q.id !== d.id && q.isActive) })); console.log(`MQP Q:${allStars10_mqpDonationQueue.length} for Gr ${gk(bottomGroupLS[0])}`); await new Promise(r => { mqpDistributionResolver = r; handleAS10_MQP_Distribution(); }); console.log(`MQP Done.`); } else { console.log("No MQP Btm"); }} else { console.error("AS10 LSFYL fail!");}} else { console.warn("No Top2"); } eliminatedQueenThisEpisode = null;}
+          else if (currentProcessingContext === 'ALLSTARS') {console.log("Std AS LSFYL...");document.getElementById('lipsync-title').textContent = 'LSFYLegacy!';lipsyncInfo.classList.remove('hidden');if (top2.length >= 2) {prepareLipsync(top2);simulateLipsyncOutcome(top2, false, false, false);if (lipsyncWinner) {document.getElementById('lsfyl-winner-name').textContent=lipsyncWinner.name;document.getElementById('lsfyl-winner-announcement').classList.remove('hidden');if(bottomQueensAS.length > 0) {console.log(`Prompt AS Elim`); await promptAllStarsEliminationChoice(lipsyncWinner, bottomQueensAS); } else { eliminatedQueenThisEpisode=null;console.log("No AS Btm"); } } else { console.error("Std AS LSFYL fail"); eliminatedQueenThisEpisode=null; } } else { console.warn("No Top2"); lipsyncWinner = null; eliminatedQueenThisEpisode = null; lipsyncInfo.classList.add('hidden'); }}
+          else if (['NORMAL', 'AS10_MERGE'].includes(currentProcessingContext)) {const isASMerge = currentProcessingContext === 'AS10_MERGE'; console.log(`${isASMerge?'ASMerge':'Norm'} LSFYL...`); document.getElementById('lipsync-title').textContent = 'LSFYLife!';if (bottomQueens.length >= 2 && !isNonEliminationChallenge) {lipsyncInfo.classList.remove('hidden'); prepareLipsync(bottomQueens); let dShantay = false; if (currentProcessingContext === 'NORMAL') { dShantay = checkForNonEliminationTwist(bottomQueens); if(dShantay) console.log("DShantay!"); }if (!dShantay) {if (gameMode === 'simulation' || gameMode === 'allstars10') { console.log(`${isASMerge?'ASMrg Sim':'Sim'} LSFYL outcome...`); simulateLipsyncOutcome(bottomQueens, false, false, false); }else if (gameMode === 'rupaul') { console.log("Setup Ru LSFYL buttons..."); setupRuPaulLipsyncButtons(bottomQueens); viewTrackRecordMidButton.disabled=false; console.log("Wait Ru LSFYL..."); return; }} else { console.log("DShantay handled."); }} else {if(isNonEliminationChallenge)console.log(`LSFYL Skip:NonElim`); else if(!bottomQueens || bottomQueens.length < 2)console.log(`LSFYL Skip:Only ${bottomQueens?.length||0} BTM`); eliminatedQueenThisEpisode=null; lipsyncInfo.classList.add('hidden'); }}
+    } catch(error){ console.error(`Error Lipsync/Decision Block: ${error}`); }
 
     // --- 10. Process Elimination & State Update ---
-    try{console.log(`Process elim/adv...`);processElimination(currentProcessingContext, activeQueensForStep, isNonEliminationChallenge);console.log(`Post: Ep ${currentEpisode}, Stage ${splitPremiereStage}, AS10 Gr ${allStars10_currentGroup} Ep ${allStars10_groupEpisode}`);}catch(error){console.error(`Err elim/adv:${error}`);}
+    try{
+        console.log(`Process elim/adv...`);
+        // ***** ADD AWAIT HERE *****
+        await processElimination(currentProcessingContext, activeQueensForStep, isNonEliminationChallenge);
+        // ***** SIMULATION CONTINUES AFTER processElimination (and potential popup) IS DONE *****
+        console.log(`Post: Ep ${currentEpisode}, Stage ${splitPremiereStage}, AS10 Gr ${allStars10_currentGroup} Ep ${allStars10_groupEpisode}`);
+    }catch(error){
+        console.error(`Err elim/adv:${error}`);
+    }
 
-    // --- 11. Display Final Outcome & UI Updates ---
+    // --- 11. Display Final Outcome & UI Updates (No change) ---
     try{if(!(currentProcessingContext==='PREMIERE_GROUP'&&originalPremiereStage==='A_Perf')) displayEliminationOutcome(); updateTrackRecordTable();updateActiveQueensDisplay((gameMode==='allstars10'&&getAS10Phase(currentEpisode)==='PRE_MERGE')?queens.filter(q=>allStars10_groups[allStars10_currentGroup]?.includes(q.id)&&q.isActive):null, gameMode==='allstars10');}catch(error){console.error(`Err outcome/UI:${error}`);}
 
-    // --- 12. Enable Next Controls ---
-    try { const finaleIsActive=isFinale||allStars10_finalLalaparuzaStage;if(!finaleIsActive){nextEpisodeButton.disabled=false;viewTrackRecordMidButton.disabled=false;nextEpisodeButton.classList.remove('hidden');const nxtEp=currentEpisode;const nxtStage=splitPremiereStage;const nxtPhase=gameMode==='allstars10'?getAS10Phase(nxtEp):null;const nxtAct=queens.filter(q=>q.isActive).length;const nxtGNu=allStars10_groupEpisode;const nxtGNa=allStars10_currentGroup;let btnTxt="Next";
-        if(gameMode==='allstars10'){if(nxtPhase==='PRE_MERGE')btnTxt=`Start ${nxtGNa} Ep ${nxtGNu}`;else if(nxtPhase==='PRE_LALA')btnTxt="Start Pre-Merge LaLa";else if(nxtPhase==='MERGE')btnTxt=`Start Merge Ep ${nxtEp}`;else if(allStars10_finalLalaparuzaStage)btnTxt="Start Final LaLa";}
-        else if(premiereFormat === 'Split'){if(originalPremiereStage === 'A_Perf'){btnTxt="Start Group B Premiere";}else{/* If coming FROM B_Perf or Normal Split */ let fTCS=(finaleFormat==='LSFTC'?4:3);if(initialCastSize<=fTCS)fTCS=Math.max(2,initialCastSize); const nextIsF=(nxtStage===null&&(nxtAct<=fTCS||nxtEp>maxEpisodesCeiling)); if(nextIsF)btnTxt="Proceed to Finale"; else btnTxt=`Next Episode (${nxtEp})`;}}
-        else{let fTCS=(finaleFormat==='LSFTC'?4:3);if(initialCastSize<=fTCS)fTCS=Math.max(2,initialCastSize);const nextIsF=(nxtStage===null&&(nxtAct<=fTCS||nxtEp>maxEpisodesCeiling));if(nextIsF)btnTxt="Proceed to Finale";else btnTxt=`Next Episode (${nxtEp})`;}
-        nextEpisodeButton.textContent=btnTxt;}else{console.log("Enable final btns");finishSeasonButton.classList.remove('hidden');viewTrackRecordMidButton.disabled=false;viewTrackRecordMidButton.textContent="View Final TR";viewTrackRecordMidButton.onclick=handleViewFinalTrackRecord;}}
-    catch(error){console.error(`Err controls:${error}`);}
+    // --- 12. Enable Next Controls (No change) ---
+    try { /* ... logic to determine next button text and enable buttons ... */
+        const finaleIsActive=isFinale||allStars10_finalLalaparuzaStage;if(!finaleIsActive){nextEpisodeButton.disabled=false;viewTrackRecordMidButton.disabled=false;nextEpisodeButton.classList.remove('hidden');const nxtEp=currentEpisode;const nxtStage=splitPremiereStage;const nxtPhase=gameMode==='allstars10'?getAS10Phase(nxtEp):null;const nxtAct=queens.filter(q=>q.isActive).length;const nxtGNu=allStars10_groupEpisode;const nxtGNa=allStars10_currentGroup;let btnTxt="Next"; if(gameMode==='allstars10'){if(nxtPhase==='PRE_MERGE')btnTxt=`Start ${nxtGNa} Ep ${nxtGNu}`;else if(nxtPhase==='PRE_LALA')btnTxt="Start Pre-Merge LaLa";else if(nxtPhase==='MERGE')btnTxt=`Start Merge Ep ${nxtEp}`;else if(allStars10_finalLalaparuzaStage)btnTxt="Start Final LaLa";} else if(premiereFormat === 'Split'){if(originalPremiereStage === 'A_Perf'){btnTxt="Start Group B Premiere";}else{let fTCS=(finaleFormat==='LSFTC'?4:3);if(initialCastSize<=fTCS)fTCS=Math.max(2,initialCastSize); const nextIsF=(nxtStage===null&&(nxtAct<=fTCS||nxtEp>maxEpisodesCeiling)); if(nextIsF)btnTxt="Proceed to Finale"; else btnTxt=`Next Episode (${nxtEp})`;}} else{let fTCS=(finaleFormat==='LSFTC'?4:3);if(initialCastSize<=fTCS)fTCS=Math.max(2,initialCastSize);const nextIsF=(nxtStage===null&&(nxtAct<=fTCS||nxtEp>maxEpisodesCeiling));if(nextIsF)btnTxt="Proceed to Finale";else btnTxt=`Next Episode (${nxtEp})`;} nextEpisodeButton.textContent=btnTxt;} else { console.log("Enable final btns"); finishSeasonButton.classList.remove('hidden'); viewTrackRecordMidButton.disabled=false; viewTrackRecordMidButton.textContent="View Final TR"; viewTrackRecordMidButton.onclick=handleViewFinalTrackRecord; }
+    } catch(error){ console.error(`Err controls:${error}`); }
 
     // --- Cleanup ---
     ruPaulChosenWinners = []; episodeRiggoryActions.clear();
 
-    console.log(`%c[Debug] === END runNextEpisodeStep V10 for: ${stepContextIdentifier} ===`, 'color: blue; font-weight: bold;');
-} // === END runNextEpisodeStep V10 (Corrected Lipsync Skip) === //// === END runNextEpisodeStep V10 (Corrected Lipsync Skip) === // // === END runNextEpisodeStep V9 (Split Premiere Button Fix) === //// === END runNextEpisodeStep V8 (Sequence Selection) === // // === END runNextEpisodeStep V7 (Riggory) === //
+    console.log(`%c[Debug] === END runNextEpisodeStep V11 for: ${stepContextIdentifier} ===`, 'color: blue; font-weight: bold;');
+} // === END runNextEpisodeStep V11 === // === END runNextEpisodeStep V10 (Corrected Lipsync Skip) === //// === END runNextEpisodeStep V10 (Corrected Lipsync Skip) === // // === END runNextEpisodeStep V9 (Split Premiere Button Fix) === //// === END runNextEpisodeStep V8 (Sequence Selection) === // // === END runNextEpisodeStep V7 (Riggory) === //
  // === END of runNextEpisodeStep === // === END of runNextEpisodeStep ===
 // Replace this ENTIRE function
 // Replace this ENTIRE function
@@ -3779,7 +3717,8 @@ function simulateLipsyncOutcome(lipsyncers, predictionOnly = false, isPremiereLS
  * @param {Array<Object>} queensInvolvedInStep - All queens who participated in this step.
  * @param {Object | null} premiereOverallWinner - Argument is no longer used, pass null.
  */
-function processElimination(context, involvedQueensList, isNonEliminationChallenge) {
+// COMPLETE FUNCTION: processElimination (V4 - Async & Calls Announce Qualifiers Modal)
+async function processElimination(context, involvedQueensList, isNonEliminationChallenge) { // <-- Added async
     // ** CAPTURE Episode number BEFORE potential advancement **
     const episodeNumberForProcessing = currentEpisode;
     // Capture group ep number (if AS10) BEFORE potential advancement
@@ -3789,12 +3728,7 @@ function processElimination(context, involvedQueensList, isNonEliminationChallen
     console.log(`---> Processing Elimination/Advancement for Logical Ep ${episodeNumberForProcessing}, Context: ${context}, GroupEp#: ${groupEpisodeForProcessing}, NonElim: ${isNonEliminationChallenge}`);
     let eliminationOccurredThisStep = false;
 
-    // Determine queens involved correctly. If called from RuPaul handler,
-    // `involvedQueensList` might be the full list. We rely on `eliminatedQueenThisEpisode` for actual elim.
-    // Track Record update needs list of *everyone* participating in the episode log.
-    // For simplicity, updateAllTrackRecords will use episodeResults and the full queens list internally for now.
-    const participatingQueenIDs = new Set(involvedQueensList.map(q => q.id)); // IDs who were active in this step/context
-
+    const participatingQueenIDs = new Set(involvedQueensList?.map(q => q?.id).filter(id => id)); // Safety check list
 
     // --- 1. Handle Standard Elimination (Normal, AllStars, AS10 Merge) ---
     if (['NORMAL', 'ALLSTARS', 'AS10_MERGE'].includes(context) && !isNonEliminationChallenge) {
@@ -3803,7 +3737,6 @@ function processElimination(context, involvedQueensList, isNonEliminationChallen
                  const queenToUpdate = queens.find(q => q.id === elimQueen.id);
                  if (queenToUpdate && queenToUpdate.isActive) {
                      queenToUpdate.isActive = false;
-                     // ** Assign elimination episode number correctly **
                      queenToUpdate.eliminatedInEpisode = episodeNumberForProcessing;
                      eliminationOccurredThisStep = true;
                      console.log(`   ELIMINATED: ${queenToUpdate.name} in Ep ${episodeNumberForProcessing}`);
@@ -3824,7 +3757,6 @@ function processElimination(context, involvedQueensList, isNonEliminationChallen
     // --- 2. Handle Immunity (Specific Case: Talent Show Premiere) ---
     if (context === 'NORMAL' && episodeNumberForProcessing === 1 && premiereFormat === 'TalentShowNonElim') {
         console.log("   Checking for Talent Show Non-Elim immunity grant...");
-        // episodeResults.win should be populated by determinePlacements or RuPaul choice
         (episodeResults.win || []).forEach(winnerQueen => {
             const queenToGrantImmunity = queens.find(q => q.id === winnerQueen.id);
              if (queenToGrantImmunity && queenToGrantImmunity.isActive) {
@@ -3834,147 +3766,106 @@ function processElimination(context, involvedQueensList, isNonEliminationChallen
                  console.warn(`   Could not grant immunity to winner ${winnerQueen?.name} (not found or inactive?)`);
              }
         });
-    } // Note: Immunity is CLEARED at the START of the *next* episode step.
+    }
 
 
     // --- 3. AS10 State Advancement & Merge Logic ---
-    let advanceAS10State = false; // Flag to track if state counters should be updated
+    let advanceAS10State = false;
     if (gameMode === 'allstars10' && !isFinale) {
         console.log("   Checking AS10 state advancement...");
-        advanceAS10State = true; // Assume we might advance unless finale triggered
+        advanceAS10State = true; // Assume we advance unless finale triggered
 
         // --- Check for Group Completion (PRE_MERGE) ---
         if (context === 'AS10_PRE_MERGE' && groupEpisodeForProcessing === 3) {
              console.log(`   Group ${allStars10_currentGroup} finished its 3 episodes (Processing Ep ${episodeNumberForProcessing}).`);
-             // Determine Qualifiers/Non-Qualifiers for this group
+             // Determine Qualifiers/Non-Qualifiers
              const groupIDs = allStars10_groups[allStars10_currentGroup];
              const groupQueens = queens.filter(q => groupIDs.includes(q.id));
              groupQueens.sort((a, b) => (b.mqp || 0) - (a.mqp || 0)); // Sort by MQP
              const qualifiers = groupQueens.slice(0, 3);
              const nonQualifiers = groupQueens.slice(3);
              console.log(`   Group ${allStars10_currentGroup} Qualifiers (Top 3 MQP): ${qualifiers.map(q => `${q.name}(${q.mqp})`).join(', ')}`);
-             announceMergeQualifiers(allStars10_currentGroup, qualifiers); // Update UI and qualifier sets (marks queen.as10_qualified = true)
+
+             // ******** CALL THE ANNOUNCEMENT MODAL AND WAIT ********
+             await announceMergeQualifiers(allStars10_currentGroup, qualifiers);
+             // ******** SIMULATION PAUSES HERE UNTIL MODAL IS CLOSED ********
+             console.log(`   Qualifier announcement modal for Group ${allStars10_currentGroup} confirmed by user.`);
+
+             // Now process non-qualifiers (after modal)
              nonQualifiers.forEach(nq => allStars10_nonQualifiers_IDs.add(nq.id)); // Add losers to non-qual set for LaLa
 
-             // Decide state for the *next* step
-             if (allStars10_currentGroup === 'C') { // If last group finished
+             // Decide state for the *next* step (Logic same as before)
+             if (allStars10_currentGroup === 'C') {
                  console.log("   All Pre-Merge groups complete. Setting state for Pre-Merge LaLaPaRuza (Logical Ep 10).");
-                 // State is *set* for next step, numbers change at end of func
-             } else { // If A or B finished
+             } else {
                  console.log(`   Moving to next group. Setting state for Group ${(allStars10_currentGroup === 'A' ? 'B' : 'C')}.`);
              }
         }
         // --- Check after Pre-Merge LaLaPaRuza ---
         else if (context === 'AS10_PRE_LALA') {
-             console.log(`   Pre-Merge LaLaPaRuza complete (Processing Ep ${episodeNumberForProcessing}). Setting state for Merge (Logical Ep 11).`);
-             // Add LaLa winner to merge qualifiers (ID is in allStars10_preMergeLalaWinnerID)
-             if (allStars10_preMergeLalaWinnerID) {
-                 allStars10_mergeQualifiers_IDs.add(allStars10_preMergeLalaWinnerID);
-                  const winnerQueen = queens.find(q => q.id === allStars10_preMergeLalaWinnerID);
-                  if (winnerQueen) { winnerQueen.as10_qualified = true; } // Mark object
-                  console.log(`   ${winnerQueen?.name || 'LaLa Winner'} added to merge qualifiers.`);
-             } else { console.warn("   No LaLaPaRuZa winner ID found to add to merge.");}
-             // Deactivate LaLa losers (losers were stored in allStars10_nonQualifiers_IDs)
-             allStars10_nonQualifiers_IDs.forEach(id => {
-                 if (id !== allStars10_preMergeLalaWinnerID) { // Don't deactivate winner
-                     const queenToDeactivate = queens.find(q => q.id === id);
-                      if (queenToDeactivate && queenToDeactivate.isActive) {
-                          queenToDeactivate.isActive = false;
-                           queenToDeactivate.eliminatedInEpisode = episodeNumberForProcessing; // Mark elim ep
-                           console.log(`   DEACTIVATED (Non-Qualifier / LaLa Loser): ${queenToDeactivate.name}`);
-                      }
-                 }
-             });
+             // ... (Logic for processing LaLa results remains the same) ...
+              console.log(`   Pre-Merge LaLaPaRuza complete (Processing Ep ${episodeNumberForProcessing}). Setting state for Merge (Logical Ep 11).`);
+              if (allStars10_preMergeLalaWinnerID) { allStars10_mergeQualifiers_IDs.add(allStars10_preMergeLalaWinnerID); const winnerQueen = queens.find(q => q.id === allStars10_preMergeLalaWinnerID); if (winnerQueen) { winnerQueen.as10_qualified = true; } console.log(`   ${winnerQueen?.name || 'LaLa Winner'} added to merge qualifiers.`); } else { console.warn("   No LaLaPaRuZa winner ID found to add to merge.");}
+              allStars10_nonQualifiers_IDs.forEach(id => { if (id !== allStars10_preMergeLalaWinnerID) { const queenToDeactivate = queens.find(q => q.id === id); if (queenToDeactivate && queenToDeactivate.isActive) { queenToDeactivate.isActive = false; queenToDeactivate.eliminatedInEpisode = episodeNumberForProcessing; console.log(`   DEACTIVATED (Non-Qualifier / LaLa Loser): ${queenToDeactivate.name}`); } } });
         }
         // --- Check within Pre-Merge or Merge ---
         else if (context === 'AS10_PRE_MERGE' || context === 'AS10_MERGE') {
-            // Just a standard step, state advances normally later
             console.log(`   Standard step within ${context}. State will advance.`);
         }
 
-        // --- Check for AS10 Finale Trigger (AFTER processing potential eliminations) ---
+        // --- Check for AS10 Finale Trigger (AFTER potential eliminations) ---
          const activePostElim = queens.filter(q => q.isActive).length;
          if (gameMode === 'allstars10' && context === 'AS10_MERGE' && activePostElim <= 6 && !allStars10_finalLalaparuzaStage) {
             console.log(`%c AS10 FINALE TRIGGERED! Reached Top ${activePostElim} during Ep ${episodeNumberForProcessing}. Preparing Final LaLaPaRuza.`, 'color: purple; font-weight: bold;');
-            // Set stage flags for the NEXT step (runFinale itself handles the actual run)
-             allStars10_finalLalaparuzaStage = true; // Flag that the final lala should run next
-             advanceAS10State = false; // STOP regular state advancement here, next step IS finale
-             isFinale = true; // Set the global finale flag NOW
-         } else if (context === 'AS10_FINALE_LALA') {
-            // If the Final LaLa *just* happened this step
-             console.log("   AS10 Final LaLa just completed.");
-             advanceAS10State = false; // No further state advancement needed
-             isFinale = true; // Ensure finale flag is set
-         } else if (allStars10_finalLalaparuzaStage && !isFinale) {
-             // Safety check: If final stage flag was set previously, but we're not in finale? Error or proceed to finale?
-             console.warn("   Final LaLa Stage flag was set, proceeding to mark as Finale.");
-             advanceAS10State = false; // Prevent advancement
+             allStars10_finalLalaparuzaStage = true;
+             advanceAS10State = false;
              isFinale = true;
+         } else if (context === 'AS10_FINALE_LALA') {
+            console.log("   AS10 Final LaLa just completed.");
+             advanceAS10State = false; isFinale = true;
+         } else if (allStars10_finalLalaparuzaStage && !isFinale) {
+            console.warn("   Final LaLa Stage flag was set, proceeding to mark as Finale.");
+             advanceAS10State = false; isFinale = true;
          }
 
-        // *** ACTUAL AS10 STATE ADVANCEMENT (Happens AFTER checks) ***
-         if (advanceAS10State) { // Only advance if not entering finale next
-              console.log("   Advancing AS10 state counters...");
-               if (context === 'AS10_PRE_MERGE' && groupEpisodeForProcessing === 3) {
-                     if (allStars10_currentGroup === 'C') { // Moving to LaLa
-                         allStars10_currentGroup = 'PRE_LALA'; currentEpisode = 10; allStars10_groupEpisode = 0;
-                     } else { // Moving to B or C group
-                         allStars10_currentGroup = (allStars10_currentGroup === 'A' ? 'B' : 'C'); allStars10_groupEpisode = 1; currentEpisode++;
-                     }
-                 } else if (context === 'AS10_PRE_LALA') { // Moving to Merge
-                     allStars10_currentGroup = 'MERGE'; currentEpisode = 11; allStars10_groupEpisode = 0;
-                 } else if (context === 'AS10_PRE_MERGE') { // Mid-group step
-                     allStars10_groupEpisode++; currentEpisode++;
-                  } else if (context === 'AS10_MERGE') { // Mid-merge step
-                     currentEpisode++; allStars10_groupEpisode = 0;
-                  }
-               console.log(`   > New AS10 State: Ep ${currentEpisode}, Group ${allStars10_currentGroup}, GroupEp ${allStars10_groupEpisode}`);
+        // --- Actual AS10 State Advancement ---
+         if (advanceAS10State) {
+             console.log("   Advancing AS10 state counters...");
+             if (context === 'AS10_PRE_MERGE' && groupEpisodeForProcessing === 3) { if (allStars10_currentGroup === 'C') { allStars10_currentGroup = 'PRE_LALA'; currentEpisode = 10; allStars10_groupEpisode = 0; } else { allStars10_currentGroup = (allStars10_currentGroup === 'A' ? 'B' : 'C'); allStars10_groupEpisode = 1; currentEpisode++; } }
+              else if (context === 'AS10_PRE_LALA') { allStars10_currentGroup = 'MERGE'; currentEpisode = 11; allStars10_groupEpisode = 0; }
+              else if (context === 'AS10_PRE_MERGE') { allStars10_groupEpisode++; currentEpisode++; }
+              else if (context === 'AS10_MERGE') { currentEpisode++; allStars10_groupEpisode = 0; }
+             console.log(`   > New AS10 State: Ep ${currentEpisode}, Group ${allStars10_currentGroup}, GroupEp ${allStars10_groupEpisode}`);
          } else {
-              console.log("   AS10 State advancement skipped (Likely entering finale).");
+             console.log("   AS10 State advancement skipped (Likely entering finale).");
          }
     }
-
-
     // --- 4. Standard Advancement (Non-AS10) ---
-    else if (advanceAS10State === false && !isFinale) {
-        console.log("   Advancing standard state...");
-        let nextStage = splitPremiereStage;
-        let incrementEpisodeNumber = false;
-
-        // Determine next state based on current state
-        if (splitPremiereStage === 'A_Perf') { nextStage = 'B_Perf'; incrementEpisodeNumber = false; currentPremiereGroup = 'B'; }
-        else if (splitPremiereStage === 'B_Perf') { nextStage = null; incrementEpisodeNumber = true; currentPremiereGroup = null; }
-        else { nextStage = null; incrementEpisodeNumber = true; } // Normal episode finished or no split premiere
-
-        // ** UPDATE state variables AFTER using them **
-        splitPremiereStage = nextStage;
-        if (incrementEpisodeNumber) {
-             currentEpisode++;
-             console.log(`   > Advanced to Episode ${currentEpisode}`);
-        } else {
-             console.log(`   > Advanced to Stage: ${splitPremiereStage}`);
-        }
+    else if (advanceAS10State === false && !isFinale) { // Ensure we check advanceAS10State is false
+         console.log("   Advancing standard state...");
+         let nextStage = splitPremiereStage; let incrementEpisodeNumber = false;
+         if (splitPremiereStage === 'A_Perf') { nextStage = 'B_Perf'; incrementEpisodeNumber = false; currentPremiereGroup = 'B'; }
+         else if (splitPremiereStage === 'B_Perf') { nextStage = null; incrementEpisodeNumber = true; currentPremiereGroup = null; }
+         else { nextStage = null; incrementEpisodeNumber = true; }
+         splitPremiereStage = nextStage;
+         if (incrementEpisodeNumber) { currentEpisode++; console.log(`   > Advanced to Episode ${currentEpisode}`); }
+          else { console.log(`   > Advanced to Stage: ${splitPremiereStage}`); }
     } else if (isFinale && !advanceAS10State) {
         console.log("   Episode advancement skipped (Finale Active).");
     }
 
-
-    // --- 5. Update Track Records (Using the captured episode/group numbers) ---
-     console.log(`   Calling updateAllTrackRecords for processed Logical Ep ${episodeNumberForProcessing}, Group Ep ${groupEpisodeForProcessing}`);
-     // It needs the list of queens who PARTICIPATED in this specific step/context
-     // Reconstructing based on episodeResults is complex if queens were SAFE.
-     // Passing the original list might be the most reliable if updateAllTrackRecords filters correctly.
-     // Or, we need to store `activeQueensForStep` globally before potential async pause.
-     // Let's rely on `involvedQueensList` which was passed in, assuming it was the correct list for the step.
+    // --- 5. Update Track Records ---
+    console.log(`   Calling updateAllTrackRecords for processed Logical Ep ${episodeNumberForProcessing}, Group Ep ${groupEpisodeForProcessing}`);
+     // Pass involvedQueensList - the list passed *into* this function
      updateAllTrackRecords(involvedQueensList, eliminationOccurredThisStep, context, episodeNumberForProcessing, groupEpisodeForProcessing);
 
 
-    // --- 6. Clean Up Step-Specific State (AFTER TR update) ---
-    lipsyncWinner = null; // Clear global lipsync winner if it was set
+    // --- 6. Clean Up Step-Specific State ---
+    lipsyncWinner = null;
 
     console.log(`---> End of Processing for Logical Ep ${episodeNumberForProcessing} <---`);
 
-} // === End processElimination V3 (Complete) === // End of processElimination// End of processElimination// End of processElimination
+} // === End processElimination V4 === // === End processElimination V3 (Complete) === // End of processElimination// End of processElimination// End of processElimination
 /**
  * Updates the trackRecord array for all involved queens based on episode results.
  * Handles different contexts (Premiere, Normal) for correct indexing and placements.
@@ -4743,14 +4634,14 @@ function updateActiveQueensDisplay(activeGroup = null, showPoints = false) {
 }
 
 async function handleAS10_MQP_Distribution() {
-    console.log("%c--- Starting MQP Distribution Process ---", "color: green; font-weight: bold;");
+    console.log("%c--- Starting MQP Distribution Process (V2 - Card HTML Fix) ---", "color: green; font-weight: bold;");
     const donationLogUL = document.querySelector('#mqp-donation-log ul');
     const logContainer = document.getElementById('mqp-donation-log');
     const mqpUI = document.getElementById('mqp-distribution-ui'); // The main container div
     const choiceOptionsDiv = document.getElementById('mqp-choice-options'); // The div holding the cards
     const donorInfoP = document.getElementById('mqp-donor-info');
     const recipientInfoP = document.getElementById('mqp-recipient-info');
-    const DEBUG_SLOWDOWN_MS = 2000; // Increase delay significantly for testing (e.g., 2000ms = 2 seconds)
+    const DEBUG_SLOWDOWN_MS = 1000; // Adjusted pause time (1 second)
 
     // Ensure UI elements exist
     if (!donationLogUL || !logContainer || !mqpUI || !choiceOptionsDiv || !donorInfoP || !recipientInfoP) {
@@ -4818,16 +4709,30 @@ async function handleAS10_MQP_Distribution() {
             } else {
                  potentialRecipientsInGroup.forEach(recipient => {
                      const card = document.createElement('div');
-                     card.className = 'choice-button-card mqp-recipient';
+                     card.className = 'choice-button-card mqp-recipient'; // Add appropriate class
                      card.dataset.queenId = recipient.id;
-                     card.innerHTML = `<img src="${recipient.image}" alt="${recipient.name}"><span>${recipient.name.split(" ")[0]}</span><div class="mqp-card-points">${recipient.mqp || 0}</div>`;
+
+                     // *** START: CORRECTED HTML Structure for MQP Card ***
+                     // Wrap img and name span in '.card-main-info'
+                     // Add the MQP points div separately
+                     card.innerHTML = `
+                         <div class="card-main-info">
+                            <img src="${recipient.image}" alt="${recipient.name}">
+                            <div class="name-score-group"> <!-- Use name-score-group for consistency if needed -->
+                                 <span class="queen-name">${recipient.name.split(" ")[0]}</span>
+                            </div>
+                         </div>
+                         <div class="mqp-card-points">${recipient.mqp || 0}</div>
+                     `;
+                    // *** END: CORRECTED HTML Structure ***
+
                      choiceOptionsDiv.appendChild(card);
                  });
             }
 
             console.log(" -> Recipient cards displayed.");
             mqpUI.offsetHeight; // Force reflow to show cards
-            await new Promise(r => setTimeout(r, DEBUG_SLOWDOWN_MS)); // ** INCREASED PAUSE to see options **
+            await new Promise(r => setTimeout(r, DEBUG_SLOWDOWN_MS)); // ** PAUSE to see options **
 
             // --- Simulate Choice ---
             let chosenRecipient = null;
@@ -4850,7 +4755,7 @@ async function handleAS10_MQP_Distribution() {
                 }
 
                 mqpUI.offsetHeight; // Force reflow to show highlight + text
-                await new Promise(r => setTimeout(r, DEBUG_SLOWDOWN_MS + 500)); // ** INCREASED PAUSE showing highlight **
+                await new Promise(r => setTimeout(r, DEBUG_SLOWDOWN_MS)); // ** PAUSE showing highlight **
 
                 // Update Data AFTER pause
                 donor.mqp_donated = (donor.mqp_donated || 0) + 1;
@@ -4865,6 +4770,16 @@ async function handleAS10_MQP_Distribution() {
                 logContainer.scrollTop = logContainer.scrollHeight;
 
                 if (chosenCard) {
+                    // Update the displayed points value AFTER donation (before removing highlight)
+                    const pointsDiv = chosenCard.querySelector('.mqp-card-points');
+                    if (pointsDiv) {
+                        pointsDiv.textContent = chosenRecipient.mqp;
+                         pointsDiv.classList.toggle('zero', chosenRecipient.mqp === 0);
+                    }
+
+                     // Optional shorter pause after highlight removal
+                    await new Promise(r => setTimeout(r, DEBUG_SLOWDOWN_MS / 3));
+
                     chosenCard.classList.remove('mqp-selected'); // Remove highlight
                     mqpUI.offsetHeight; // Reflow after removing highlight
                     console.log(" -> Removed highlight.");
@@ -4880,7 +4795,9 @@ async function handleAS10_MQP_Distribution() {
                 await new Promise(r => setTimeout(r, DEBUG_SLOWDOWN_MS)); // Pause showing message
             }
 
-             // No need for pause *before* next donor, pause happens at start of loop's next iteration
+             // Add short pause before next donor's turn starts
+            await new Promise(r => setTimeout(r, DEBUG_SLOWDOWN_MS / 4));
+
         } // End for loop
 
         console.log("--- MQP Distribution Loop Finished ---");
@@ -4907,32 +4824,59 @@ async function handleAS10_MQP_Distribution() {
         }
     }
 
-} // End handleAS10_MQP_Distribution
+} // End handleAS10_MQP_Distribution (V2 Card HTML Fix) // End handleAS10_MQP_Distribution
 function announceMergeQualifiers(groupLetter, qualifiers) {
-    const ui = document.getElementById('merge-announcement-ui');
-    const groupNameSpan = document.getElementById('merge-group-name');
-    const listP = document.getElementById('merge-qualifiers-list');
+    console.log(`[Announce Qualifiers V2] Group: ${groupLetter}, Qualifiers: ${qualifiers?.map(q => q.name).join(', ')}`);
+    return new Promise((resolve) => { // Return a promise
+        // --- Get New Modal Elements ---
+        const popup = document.getElementById('merge-qualifier-popup');
+        const groupNameSpan = document.getElementById('merge-qualifier-group-name');
+        const cardsContainer = document.getElementById('merge-qualifier-cards');
+        const continueButton = document.getElementById('confirm-merge-qualifiers');
 
-    if (!ui || !groupNameSpan || !listP) {
-        console.error("Merge announcement UI elements not found!");
-        return;
-    }
+        if (!popup || !groupNameSpan || !cardsContainer || !continueButton) {
+            console.error("Merge qualifier modal elements not found!");
+             resolve(); // Resolve immediately if UI is broken
+            return;
+        }
 
-    groupNameSpan.textContent = `Group ${groupLetter}`;
-    if (qualifiers && qualifiers.length > 0) {
-        listP.textContent = qualifiers.map(q => q.name).join(', ');
-         // Add qualifiers to the global set
-         qualifiers.forEach(q => {
-            allStars10_mergeQualifiers_IDs.add(q.id);
-            q.as10_qualified = true; // Mark the queen object
-        });
-    } else {
-        listP.textContent = "No qualifiers determined.";
-    }
+        // Clear previous cards and setup
+        cardsContainer.innerHTML = '';
+        groupNameSpan.textContent = groupLetter;
+        continueButton.onclick = null; // Remove previous listener if any
 
-    ui.classList.remove('hidden');
-    // Keep UI visible until the next actual challenge step starts in runNextEpisodeStep
-}
+        // --- Populate Qualifier Cards ---
+        if (qualifiers && qualifiers.length > 0) {
+            qualifiers.forEach(queen => {
+                 if (!queen) return; // Safety check
+
+                // Add queen to the global qualifier set & mark object
+                allStars10_mergeQualifiers_IDs.add(queen.id);
+                 queen.as10_qualified = true;
+
+                const card = document.createElement('div');
+                card.className = 'qualifier-card';
+                card.innerHTML = `
+                    <img src="${queen.image}" alt="${queen.name}">
+                    <span class="queen-name">${queen.name}</span>
+                    <span class="mqp-score" title="My Queen Points">👑 ${queen.mqp || 0} MQP</span>
+                 `;
+                cardsContainer.appendChild(card);
+            });
+        } else {
+            cardsContainer.innerHTML = '<p>No qualifiers determined for this group.</p>';
+        }
+
+        // Add click listener for the continue button
+        continueButton.onclick = () => {
+            popup.classList.add('hidden'); // Hide the modal
+             resolve(); // Resolve the promise to let the simulation continue
+        };
+
+        // Show the modal
+        popup.classList.remove('hidden');
+    }); // End Promise
+} // === END announceMergeQualifiers V2 ===
 async function runLaLaPaRuZa(participants, type) {
     console.log(`--- Starting LaLaPaRuZa (${type}) with ${participants.length} participants ---`);
     allStars10_lalaparuzaLog = []; // Clear previous log
@@ -5071,171 +5015,144 @@ function spawnConfetti() {
 // Replace this ENTIRE function in script.js
 
 // Replace this ENTIRE function in script.js
-
-// COMPLETE FUNCTION: updateTrackRecordTable (Final Fix for "INACTIVE" text & class)
+// COMPLETE FUNCTION: updateTrackRecordTable (V10 - Column Count & Inactive Cell Fix)
+// COMPLETE FUNCTION: updateTrackRecordTable (V11 - Image Only Queen Column)
+// COMPLETE FUNCTION: updateTrackRecordTable (V12 - Avg PPE, AS10 MQP, No WHSL B)
 function updateTrackRecordTable(isFinalUpdate = false) {
-    // console.log("[Debug TR Update V7] Updating Track Record Table. Final:", isFinalUpdate);
-    trackRecordBody.innerHTML = ''; // Clear existing body rows
+    // console.log(`[Debug TR Update V12 - AvgPPE/MQP] Updating. Final: ${isFinalUpdate}, Mode: ${gameMode}`);
+    trackRecordBody.innerHTML = ''; // Clear body
 
     if (!queens || queens.length === 0) {
-        console.log("[Debug TR Update V7] No queen data found.");
-        trackRecordHeader.innerHTML = ''; // Also clear header if no queens
+        trackRecordHeader.innerHTML = ''; // Clear header if no queens
         return;
     }
 
-    // --- Calculate Max Episodes/Columns Based ONLY on Existing Data ---
+    // --- Calculate Max Columns based *only* on existing data ---
     let maxRecordIndexUsed = -1;
     queens.forEach(q => {
         if (q.trackRecord && q.trackRecord.length > 0) {
-            // Find the last index that isn't empty or just whitespace
             const lastMeaningfulIndex = q.trackRecord.findLastIndex(p => p !== undefined && p !== null && String(p).trim() !== '');
             maxRecordIndexUsed = Math.max(maxRecordIndexUsed, lastMeaningfulIndex);
         }
     });
-    // The number of columns needed is the highest index found + 1
-    // If no meaningful records found yet (e.g., start of season), default to 1 column if episode >= 1
-    const displayColumnsCount = (maxRecordIndexUsed === -1 && currentEpisode >= 1) ? 1 : Math.max(1, maxRecordIndexUsed + 1);
-    console.log(`[Debug TR Update V7] Max Record Index Used: ${maxRecordIndexUsed}, Calculated Display Columns: ${displayColumnsCount}`);
+    const displayColumnsCount = maxRecordIndexUsed + 1;
+    // console.log(`[Debug TR Update V12] Max Idx: ${maxRecordIndexUsed}, Display Cols: ${displayColumnsCount}`);
 
-
-    // --- Update Header ---
+    // --- Update Header Conditionally ---
     trackRecordHeader.innerHTML = ''; // Clear previous header
     const headerRow = document.createElement('tr');
-    headerRow.innerHTML = '<th class="queen-header-col">Queen</th>'; // Class applied here
-    // Generate header cells based on calculated columns
+    headerRow.innerHTML = '<th class="queen-header-col" title="Queen (Hover for Name)">QUEEN</th>';
     for (let i = 0; i < displayColumnsCount; i++) {
         headerRow.appendChild(Object.assign(document.createElement('th'), { textContent: `Ep ${i + 1}` }));
     }
-    // Append fixed stat headers
-    headerRow.innerHTML += '<th>W</th><th>H</th><th>S</th><th>L</th><th>B</th><th>PPE</th><th>Place</th>';
+    // Append final headers based on game mode
+    if (gameMode === 'allstars10') {
+        headerRow.innerHTML += '<th>Avg PPE</th><th>MQP</th>'; // AS10 specific
+    } else {
+        headerRow.innerHTML += '<th>Avg PPE</th><th>Place</th>'; // Standard specific
+    }
     trackRecordHeader.appendChild(headerRow);
 
-    // --- Sort Queens & Calculate Ranks (No change from V6 logic) ---
-    queens.forEach(q => q.ppe = calculatePPE(q)); // Ensure PPE is up-to-date
-    const sortedQueens = [...queens].sort((a, b) => { /* ... Your robust sort logic (same as before) ... */
-        const aIsWinner=a.trackRecord?.includes("WINNER"); const bIsWinner=b.trackRecord?.includes("WINNER"); if(aIsWinner&&!bIsWinner)return -1; if(!aIsWinner&&bIsWinner)return 1; const aIsRunnerUp=a.trackRecord?.includes("RUNNER-UP"); const bIsRunnerUp=b.trackRecord?.includes("RUNNER-UP"); if(aIsRunnerUp&&!bIsRunnerUp&&!bIsWinner)return -1; if(!aIsRunnerUp&&bIsRunnerUp&&!aIsWinner)return 1; if(aIsRunnerUp&&bIsRunnerUp)return(b.ppe||0)-(a.ppe||0); const aIsActive=a.isActive&&!aIsWinner&&!aIsRunnerUp; const bIsActive=b.isActive&&!bIsWinner&&!bIsRunnerUp; if(aIsActive&&!bIsActive)return -1; if(!aIsActive&&bIsActive)return 1; if(aIsActive&&bIsActive)return(b.ppe||0)-(a.ppe||0); const elimEpA=a.eliminatedInEpisode||(isFinalUpdate ? 999 : 0); const elimEpB=b.eliminatedInEpisode||(isFinalUpdate ? 999 : 0); if(elimEpB!==elimEpA)return elimEpB-elimEpA; return(b.ppe||0)-(a.ppe||0);
+    // --- Recalculate TOTAL PPE for sorting & Average Calculation ---
+    // We still need total points to determine rank and calculate average
+    queens.forEach(queen => {
+        let totalPoints = 0;
+        let episodesCompeted = 0;
+        const tr = queen.trackRecord || [];
+
+        for (let i = 0; i < displayColumnsCount; i++) { // Iterate up to the max *displayed* columns
+             const placement = (tr[i] || "").trim();
+             if (placement !== 'INACTIVE' && placement !== '' && placement !== '-') {
+                 episodesCompeted++; // Count if not inactive or future
+                 totalPoints += PLACEMENT_POINTS[placement] || 0; // Add points
+             }
+             // Need to also handle explicit "ELIM" not counting towards avg? Maybe.
+             // Let's count it for now as they *did* compete.
+        }
+
+        queen.totalPpeForSort = parseFloat(totalPoints.toFixed(2)); // Store total for sorting
+        queen.episodesCompeted = episodesCompeted; // Store count for average calc
+        queen.avgPpe = episodesCompeted > 0 ? parseFloat((totalPoints / episodesCompeted).toFixed(2)) : 0; // Calculate Avg
+
+         // DEBUGGING: Log calculations per queen
+         // console.log(`  Queen: ${queen.name}, TR Length: ${tr.length}, Ep Competed: ${episodesCompeted}, Total PPE: ${queen.totalPpeForSort}, Avg PPE: ${queen.avgPpe}`);
+    });
+
+
+    // --- Sort Queens using TOTAL PPE & Calculate Ranks ---
+    const sortedQueens = [...queens].sort((a, b) => {
+        const aIsWinner=a.trackRecord?.includes("WINNER"); const bIsWinner=b.trackRecord?.includes("WINNER"); if(aIsWinner&&!bIsWinner)return -1; if(!aIsWinner&&bIsWinner)return 1; const aIsRunnerUp=a.trackRecord?.includes("RUNNER-UP"); const bIsRunnerUp=b.trackRecord?.includes("RUNNER-UP"); if(aIsRunnerUp&&!bIsRunnerUp&&!bIsWinner)return -1; if(!aIsRunnerUp&&bIsRunnerUp&&!aIsWinner)return 1; if(aIsRunnerUp&&bIsRunnerUp)return(b.totalPpeForSort||0)-(a.totalPpeForSort||0); const aIsActive=a.isActive&&!aIsWinner&&!aIsRunnerUp; const bIsActive=b.isActive&&!bIsWinner&&!bIsRunnerUp; if(aIsActive&&!bIsActive)return -1; if(!aIsActive&&bIsActive)return 1; if(aIsActive&&bIsActive)return(b.totalPpeForSort||0)-(a.totalPpeForSort||0); const elimEpA=a.eliminatedInEpisode||(isFinalUpdate ? 999 : 0); const elimEpB=b.eliminatedInEpisode||(isFinalUpdate ? 999 : 0); if(elimEpB!==elimEpA)return elimEpB-elimEpA; return(b.totalPpeForSort||0)-(a.totalPpeForSort||0); // Fallback sort by total PPE
     });
     const queenRanks = new Map();
     sortedQueens.forEach((queen, index) => { queenRanks.set(queen.id, index + 1); });
+
 
     // --- Populate Table Body ---
     sortedQueens.forEach(queen => {
         const row = document.createElement('tr');
 
-        // --- Append Queen Name Cell (Relies on V7 CSS Fix for alignment) ---
-        const nameCell = document.createElement('td');
-        nameCell.className = 'queen-name-col'; // Ensure class is set for styling
-        const img = document.createElement('img');
-        img.src = queen.image || 'placeholder.png'; // Handle missing images gracefully
-        img.alt = queen.name;
-        img.className = 'track-record-queen-img';
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = queen.name;
-        nameCell.appendChild(img);
-        nameCell.appendChild(nameSpan);
-        // Add status class for highlighting/strikethrough etc.
-        const isWinner = queen.trackRecord?.includes("WINNER"); const isRunnerUp = queen.trackRecord?.includes("RUNNER-UP"); const isEliminated = !queen.isActive && !isWinner && !isRunnerUp;
-        let statusClass = isWinner ? 'status-winner' : isRunnerUp ? 'status-runnerup' : isEliminated ? 'status-eliminated' : 'status-active';
-        nameCell.classList.add(statusClass); nameCell.title = isWinner ? 'Winner' : isRunnerUp ? 'Runner-Up' : isEliminated ? `Eliminated Ep ${queen.eliminatedInEpisode || '?'}` : 'Active';
-        row.appendChild(nameCell);
+        // Append Queen Name Cell (Image Only - Same as V11)
+        const nameCell = document.createElement('td'); nameCell.className = 'queen-name-col'; const img = document.createElement('img'); img.src = queen.image || 'placeholder.png'; img.alt = queen.name; img.className = 'track-record-queen-img'; nameCell.appendChild(img); const isWinner = queen.trackRecord?.includes("WINNER"); const isRunnerUp = queen.trackRecord?.includes("RUNNER-UP"); const isEliminated = !queen.isActive && !isWinner && !isRunnerUp; let statusClass = isWinner ? 'status-winner' : isRunnerUp ? 'status-runnerup' : isEliminated ? 'status-eliminated' : 'status-active'; nameCell.classList.add(statusClass); let titleText = queen.name; if (isWinner) titleText += ' (Winner)'; else if (isRunnerUp) titleText += ' (Runner-Up)'; else if (isEliminated) titleText += ` (Eliminated Ep ${queen.eliminatedInEpisode || '?'})`; nameCell.title = titleText; row.appendChild(nameCell);
 
 
-        // --- Loop through required DISPLAY COLUMNS ---
-        let queenHasBeenEliminatedThisRow = false; // Track elim status within the row loop
+        // Loop through Episode Columns (Same logic as V11/V10)
+        let queenHasBeenEliminatedThisRow = false;
         for (let i = 0; i < displayColumnsCount; i++) {
             const cell = document.createElement('td');
             const recordIndex = i;
+            let placement = ""; let cellType = 'future'; let textContent = '-';
+            if (queen.trackRecord && recordIndex < queen.trackRecord.length) { placement = (queen.trackRecord[recordIndex] || "").trim(); }
 
-            let placement = ""; // Initialize placement
-            let cellType = 'future'; // Default type
-            let textContent = '-'; // Default text for future cells
+            // Determine Cell State (ORDER MATTERS - Same as V11/V10)
+            if (placement === "ELIM") { cellType = 'placement'; textContent = "ELIM"; queenHasBeenEliminatedThisRow = true; }
+            else if (queenHasBeenEliminatedThisRow) { cellType = 'inactive'; textContent = ''; }
+            else if (queen.eliminatedInEpisode && (recordIndex + 1) > queen.eliminatedInEpisode) { cellType = 'inactive'; textContent = ''; }
+            else if (gameMode === 'allstars10' && recordIndex >= 0 && recordIndex < 9) { const gIdx = recordIndex < 3 ? 'A' : recordIndex < 6 ? 'B' : 'C'; if (queen.as10_group && queen.as10_group !== gIdx && !placement) { cellType = 'inactive'; textContent = ''; } }
+            else if (gameMode === 'allstars10' && recordIndex === 9) { const participated = allStars10_nonQualifiers_IDs.has(queen.id) || allStars10_preMergeLalaWinnerID === queen.id; if (!participated && !placement) { cellType = 'inactive'; textContent = ''; } }
+            else if (premiereFormat === 'Split' && (recordIndex === 0 || recordIndex === 1)) { const inA = splitPremiereGroupA_IDs.includes(queen.id); const inB = splitPremiereGroupB_IDs.includes(queen.id); const participated = (recordIndex === 0 && inA) || (recordIndex === 1 && inB); if (!participated && !placement) { cellType = 'inactive'; textContent = ''; } }
 
-            // --- Get Placement Data ---
-            if (queen.trackRecord && recordIndex < queen.trackRecord.length) {
-                placement = (queen.trackRecord[recordIndex] || "").trim(); // Ensure empty strings if data is null/undefined
+            if (cellType === 'future') { // Check Actual Placement Value
+                const validPlacements = ["WIN", "TOP2", "HIGH", "SAFE", "LOW", "BTM", "IMMUNE", "WINNER", "RUNNER-UP"];
+                if (placement && validPlacements.includes(placement)) { cellType = 'placement'; textContent = placement; }
+                else { cellType = 'future'; textContent = '-'; }
             }
 
-            // --- Determine Cell State ---
-            // 1. Was queen eliminated *in* this episode (based on ELIM placement value)?
-            if (placement === "ELIM") {
-                  cellType = 'placement';
-                  textContent = "ELIM";
-                  queenHasBeenEliminatedThisRow = true; // Set flag for subsequent cells in this row
-            }
-            // 2. Or, check if the ELIM flag is already set from a *previous* cell in this row loop
-             else if (queenHasBeenEliminatedThisRow) {
-                cellType = 'inactive';
-                textContent = ''; // Blank for inactive
-             }
-            // 3. If not eliminated yet, check if eliminated *before* this episode using the stored elim ep number
-             else if (queen.eliminatedInEpisode && (recordIndex + 1) > queen.eliminatedInEpisode) {
-                cellType = 'inactive';
-                textContent = ''; // Blank for inactive
-             }
-            // 4. Check for specific format non-participation (e.g., Split Premiere)
-             else if (premiereFormat === 'Split' && (recordIndex === 0 || recordIndex === 1)) {
-                const wasInGroupA = splitPremiereGroupA_IDs.includes(queen.id); const wasInGroupB = splitPremiereGroupB_IDs.includes(queen.id);
-                if ((recordIndex === 0 && !wasInGroupA) || (recordIndex === 1 && !wasInGroupB)) { cellType = 'inactive'; textContent = ''; }
-                 // Fall through if participated, will check placement value below
-             }
-            // 5. AS10 Pre-Merge Non-participation
-            else if (gameMode === 'allstars10' && recordIndex >= 0 && recordIndex < 9) { // Indices for pre-merge group eps
-                 const groupForThisIndex = recordIndex < 3 ? 'A' : recordIndex < 6 ? 'B' : 'C';
-                 if (queen.as10_group && queen.as10_group !== groupForThisIndex) { cellType = 'inactive'; textContent = ''; }
-                 // Fall through if participated
-            }
-            // 6. AS10 Pre-Lala Non-participation (Index 9)
-            else if (gameMode === 'allstars10' && recordIndex === 9) {
-                // Inactive if they qualified OR didn't win the lala
-                if (queen.as10_qualified || (!allStars10_nonQualifiers_IDs.has(queen.id) && allStars10_preMergeLalaWinnerID !== queen.id)) { cellType = 'inactive'; textContent = ''; }
-                 // Fall through if participated, checks actual WIN/ELIM placement below
-             }
-
-            // 7. If type is still 'future', determine based on actual placement value
-            if (cellType === 'future') {
-                  const validPlacements = ["WIN", "TOP2", "HIGH", "SAFE", "LOW", "BTM", "IMMUNE", "WINNER", "RUNNER-UP"]; // Exclude ELIM (already checked)
-                 if (placement && validPlacements.includes(placement)) {
-                      cellType = 'placement';
-                      textContent = placement; // Use the actual placement text
-                  } else { // Cell is truly future or contains unexpected data
-                      cellType = 'future';
-                      textContent = (placement === '' ? '-' : '?'); // Default '-' for blank/future
-                  }
-            }
-
-            // --- Apply Class and FINAL Text (abbreviations, etc.) ---
+            // Apply Styling/Text (Same as V11/V10)
             cell.textContent = textContent;
-            switch(cellType) {
-                case 'placement':
-                    cell.classList.add(`track-${placement}`); // Base class for styling
-                    if (placement === "IMMUNE") cell.textContent = "IMM";
-                    else if (placement === "RUNNER-UP") cell.textContent = "RU";
-                    break;
-                case 'inactive':
-                    cell.classList.add('track-inactive'); // Inactive styling
-                    cell.textContent = ''; // Explicitly empty
-                    break;
-                case 'future': // Includes empty strings from record now
-                default:
-                    cell.classList.add('track-future'); // Future styling
-                    cell.textContent = '-'; // Ensure it's '-'
-                    break;
-            }
+            switch (cellType) { case 'placement': cell.classList.add(`track-${placement}`); if (placement === "IMMUNE") cell.textContent = "IMM"; else if (placement === "RUNNER-UP") cell.textContent = "RU"; break; case 'inactive': cell.classList.add('track-inactive'); cell.textContent = ''; break; case 'future': default: cell.classList.add('track-future'); cell.textContent = '-'; break; }
             row.appendChild(cell);
         } // --- End of episode column loop ---
 
-        // --- Append Stats and Final Place Cells ---
-        const stats = [ queen.wins || 0, queen.highs || 0, queen.safes || 0, queen.lows || 0, queen.bottoms || 0, parseFloat((queen.ppe || 0).toFixed(2)) ];
-        stats.forEach(statValue => { const statCell = document.createElement('td'); statCell.textContent = statValue; row.appendChild(statCell); });
-        const finalPlaceCell = document.createElement('td'); finalPlaceCell.className = 'final-place-cell';
-        const rank = queenRanks.get(queen.id) || '?';
-        let displayPlace = (isWinner) ? "WINNER" : (isRunnerUp) ? "RUNNER-UP" : (isEliminated || (queen.isActive && isFinalUpdate)) ? `#${rank}` : "-";
-        if (isWinner) finalPlaceCell.classList.add('track-WINNER'); else if (isRunnerUp) finalPlaceCell.classList.add('track-RUNNER-UP'); else if(isEliminated) finalPlaceCell.classList.add('status-eliminated');
-        finalPlaceCell.textContent = displayPlace;
-        row.appendChild(finalPlaceCell);
 
-        trackRecordBody.appendChild(row); // Append row to table body
+        // --- Append FINAL Columns Conditionally ---
+        // Average PPE Cell (Common to both modes)
+        const avgPpeCell = document.createElement('td');
+        avgPpeCell.textContent = queen.avgPpe.toFixed(2); // Use calculated average
+        avgPpeCell.classList.add('stat-cell', 'ppe-cell'); // Add classes for styling
+        row.appendChild(avgPpeCell);
+
+        // Mode-Specific Cell (Place or MQP)
+        const finalStatCell = document.createElement('td');
+        if (gameMode === 'allstars10') {
+             finalStatCell.textContent = queen.mqp || 0; // Show MQP
+             finalStatCell.classList.add('stat-cell', 'mqp-cell'); // MQP specific class
+             finalStatCell.title = "My Queen Points"; // Tooltip
+        } else {
+            // Standard Mode: Final Place Cell
+            finalStatCell.className = 'final-place-cell'; // Keep existing class
+             const rank = queenRanks.get(queen.id) || '?';
+             let displayPlace = (isWinner) ? "WINNER" : (isRunnerUp) ? "RUNNER-UP" : (isEliminated || (queen.isActive && isFinalUpdate)) ? `#${rank}` : "-";
+             if (isWinner) finalStatCell.classList.add('track-WINNER');
+             else if (isRunnerUp) finalStatCell.classList.add('track-RUNNER-UP');
+             else if (isEliminated) finalStatCell.classList.add('status-eliminated');
+             finalStatCell.textContent = displayPlace;
+             finalStatCell.title = "Final Rank"; // Tooltip
+        }
+         row.appendChild(finalStatCell);
+
+
+        trackRecordBody.appendChild(row);
     }); // --- End of sortedQueens loop ---
-     console.log("[Debug TR Update V7] Table update process complete.");
-} // === End of updateTrackRecordTable V7 (Fixes) === // // --- End of updateTrackRecordTable V6 --- // --- End of updateTrackRecordTable V5 --- // --- End of updateTrackRecordTable V4 --- // --- End of updateTrackRecordTable V3 --- // --- End of updateTrackRecordTable ---// --- End of updateTrackRecordTable ---
+    // console.log("[Debug TR Update V12] Table update process complete.");
+} // === End of updateTrackRecordTable V12 === // === End of updateTrackRecordTable V11 === // === End of updateTrackRecordTable V10 ===
 document.addEventListener('DOMContentLoaded', initializeSimulator);

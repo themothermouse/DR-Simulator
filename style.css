@@ -597,24 +597,50 @@ button:disabled::after { display: none; }
 #track-record-table th,
 #track-record-table td { border: none; padding: 8px 10px; text-align: center; font-size: 0.85em; vertical-align: middle !important; border-bottom: 1px solid #f0f0f0; width: 70px; overflow: hidden; text-overflow: ellipsis; }
 #track-record-table th { padding: 12px 12px; }
-#track-record-table thead th { background-color: #f8f9fa; color: #495057; border-bottom: 2px solid #dee2e6; position: sticky; top: 0; z-index: 3; font-weight: 600; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px; white-space: normal; line-height: 1.3; }
-#track-record-table th.queen-header-col { min-width: 200px; width: 200px; text-align: left; padding-left: 15px; position: sticky; left: 0; z-index: 4; background-color: #f8f9fa !important; border-right: 1px solid #dee2e6; }
-#track-record-table tbody td { background-color: transparent; color: var(--text-color); transition: background-color 0.2s ease; font-weight: 500; }
-#track-record-table tbody tr:nth-child(even) { background-color: #fdfdfd; }
-
-/* Queen Column Alignment Fix V4 (No Flex) */
-#track-record-table td.queen-name-col {
+#track-record-table thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 3; /* Ensure header is above cells */
     font-weight: 600;
-    text-align: left !important;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: normal; /* Allow header text to wrap */
+    line-height: 1.3;
+}
+#track-record-table th.queen-header-col {
+    /* --- ADJUSTED --- */
+    min-width: 75px;  /* Reduced width */
+    width: 75px;      /* Reduced width */
+    text-align: center; /* Center "QUEEN" header text */
+    padding: 12px 5px; /* Adjust padding */
+    /* --- END ADJUSTED --- */
     position: sticky;
     left: 0;
-    z-index: 2;
+    z-index: 4; /* Header needs higher z-index */
+    background-color: #f8f9fa !important;
     border-right: 1px solid #dee2e6;
-    background-color: inherit;
-    width: 200px;
-    white-space: normal;
-    padding: 5px 10px;
-    vertical-align: middle !important;
+}#track-record-table tbody td { background-color: transparent; color: var(--text-color); transition: background-color 0.2s ease; font-weight: 500; }
+#track-record-table tbody tr:nth-child(even) { background-color: #fdfdfd; }
+
+#track-record-table td.queen-name-col {
+    font-weight: 600;
+    /* --- ADJUSTED --- */
+    text-align: center !important; /* Center the image horizontally */
+    vertical-align: middle !important; /* Center image vertically */
+    width: 75px; /* Match header width */
+    min-width: 75px; /* Match header min-width */
+    padding: 5px; /* Reduced padding */
+    /* --- END ADJUSTED --- */
+    position: sticky;
+    left: 0;
+    z-index: 2; /* Cells below header */
+    border-right: 1px solid #dee2e6;
+    background-color: inherit; /* Keeps alternating row color */
+    /* No longer need flex/gap or display: inline-block logic here */
 }
 #track-record-table td.queen-name-col img,
 #track-record-table td.queen-name-col span {
@@ -623,8 +649,15 @@ button:disabled::after { display: none; }
     margin-right: 8px;
 }
 #track-record-table td.queen-name-col img {
-    width: 38px; height: 38px; object-fit: cover; border-radius: 50%;
-    border: 1px solid var(--border-color); box-shadow: 0 1px 2px var(--shadow-color-light);
+    /* Inherit display: block or inline-block is fine, centering is done by cell */
+    width: 38px; /* Keep image size consistent */
+    height: 38px; /* Keep image size consistent */
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 2px var(--shadow-color-light);
+    margin: 0; /* Remove margin if any */
+    vertical-align: middle; /* Ensure it aligns nicely if TD display changes */
 }
 #track-record-table td.queen-name-col span {
     line-height: 1.3;
@@ -654,9 +687,37 @@ button:disabled::after { display: none; }
 #track-record-table tbody tr td.track-RUNNER-UP { background-color: var(--runnerup-color); color: #444; font-weight: 600; }
 #track-record-table tbody td.track-inactive { background-color: #6c757d !important; color: transparent !important; font-style: normal !important; font-weight: 400 !important; cursor: default; border-color: #5a6268; border: none !important; text-indent: -9999px;}
 #track-record-table tbody td.track-inactive::before { content: none !important; }
-#track-record-table tbody td.track-future { color: #d0d0d0; font-style: italic; background-color: transparent !important; border: none !important; }
-#track-record-table th:nth-last-child(-n+7), #track-record-table td:nth-last-child(-n+7) { font-size: 0.8em; width: 50px; background-color: #f8f9fa; border-left: 1px solid #eee; }
-#track-record-table tbody tr:nth-child(even) td:nth-last-child(-n+7) { background-color: #f1f3f5; }
+#track-record-table tbody td.track-future { color: #d0d0d0; font-style: italic; background-color: rgb(100, 100, 100); border: none !important; }
+/* Style the Avg PPE and final Place/MQP columns */
+#track-record-table th:nth-last-child(-n+2),
+#track-record-table td:nth-last-child(-n+2) {
+    font-size: 0.8em;      /* Keep small font size */
+    width: 55px;          /* Maybe slightly wider than old stats */
+    background-color: #f8f9fa; /* Header-like background */
+    border-left: 1px solid #eee;
+    font-weight: 600; /* Make stat values bolder */
+    text-align: center; /* Center align these values */
+}
+/* Alternate row background for these stat columns */
+#track-record-table tbody tr:nth-child(even) td:nth-last-child(-n+2) {
+    background-color: #f1f3f5; /* Lighter alternate color */
+}
+
+/* Add specific class styling if needed */
+#track-record-table td.ppe-cell {
+    /* Optional: specific style for PPE */
+    color: #4a148c; /* Example: Deep purple for PPE */
+}
+#track-record-table td.mqp-cell {
+     /* Optional: specific style for MQP */
+     color: #e65100; /* Example: Orange for MQP */
+}
+#track-record-table td.final-place-cell {
+    /* Inherits base stat styling but keeps existing WINNER/RU colors */
+    font-weight: 700; /* Keep final rank bold */
+    width: 70px; /* Keep final place a bit wider if needed */
+}
+
 #track-record-table td.final-place-cell { font-weight: 700; font-size: 0.85em; width: 70px; }
 #track-record-table td.final-place-cell.track-WINNER { background-color: var(--winner-color); color: #4f3b00; }
 #track-record-table td.final-place-cell.track-RUNNER-UP { background-color: var(--runnerup-color); color: #444; }
@@ -732,7 +793,15 @@ button:disabled::after { display: none; }
     #track-record-table th.queen-header-col { min-width: 130px; width: 130px;}
     #track-record-table td.queen-name-col { width: 130px; gap: 0; padding: 4px 8px; }
     #track-record-table td.queen-name-col img { margin-right: 5px; width: 30px; height: 30px; }
-    #track-record-table th:nth-last-child(-n+7), #track-record-table td:nth-last-child(-n+7) { width: 35px; font-size: 0.65em; } /* Narrower stats */
+    @media (max-width: 480px) {
+        #track-record-table th:nth-last-child(-n+2), #track-record-table td:nth-last-child(-n+2) {
+            width: 40px;
+            font-size: 0.7em;
+        }
+         #track-record-table td.final-place-cell {
+            width: 50px; /* Adjust final place width if needed */
+         }
+   }
     #track-record-table td.final-place-cell { width: 50px; }
     .choice-button-card.enhanced { width: 130px; min-height: 200px;}
     .choice-button-card.enhanced img { width: 65px; height: 65px; }
@@ -742,6 +811,134 @@ button:disabled::after { display: none; }
     .choice-card-container { gap: 10px; }
 }
 
+/* --- AS10 Merge Qualifier Popup/Modal --- */
+.modal-overlay {
+    position: fixed; /* Sit on top of everything */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.65); /* Dark semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's above other content */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+.modal-overlay:not(.hidden) { /* When not hidden */
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease;
+}
+
+.modal-content {
+    background: var(--container-bg);
+    padding: 35px 40px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    width: 90%;
+    max-width: 750px; /* Limit max width */
+    text-align: center;
+    transform: scale(0.9);
+    opacity: 0;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+.modal-overlay:not(.hidden) .modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+
+/* Specific styles for Merge Announcement Box */
+.merge-announcement-box {
+    border-top: 5px solid var(--primary-color);
+}
+.merge-announcement-box h3 {
+    color: var(--primary-color);
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+.merge-description {
+    font-size: 1.05em;
+    color: #555;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+.merge-description.footnote {
+    font-size: 0.9em;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    font-style: italic;
+    color: #777;
+}
+
+/* Grid for Qualifier Cards */
+.qualifier-card-grid {
+    display: flex; /* Changed to flex */
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 20px; /* Space between cards */
+    justify-content: center; /* Center the cards */
+    align-items: stretch; /* Make cards same height if needed */
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: rgba(240, 240, 250, 0.4);
+    border-radius: var(--border-radius-small);
+    border: 1px dashed #c9b7e2;
+}
+
+/* Mini Card Style for Qualifiers */
+.qualifier-card {
+    background-color: #fff;
+    border: 2px solid var(--secondary-color);
+    border-radius: var(--border-radius-small);
+    padding: 15px 10px;
+    text-align: center;
+    box-shadow: 0 3px 8px rgba(106, 13, 173, 0.1);
+    width: 130px; /* Fixed width for better alignment */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s ease;
+}
+.qualifier-card:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 6px 12px rgba(106, 13, 173, 0.2);
+}
+
+.qualifier-card img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 10px;
+    border: 3px solid #e0e0e0;
+}
+
+.qualifier-card .queen-name {
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--secondary-color);
+    line-height: 1.3;
+    margin-bottom: 5px;
+    flex-grow: 1; /* Allow name to push MQP down */
+}
+
+.qualifier-card .mqp-score {
+    font-size: 0.85em;
+    font-weight: 700;
+    color: var(--primary-color);
+    background-color: #fdf0f7;
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-top: auto; /* Push to bottom */
+}
+
+.modal-actions {
+    margin-top: 30px;
+}
 /* Styles for LaLaPaRUza UI inside LipSync Box */
 #lalaparuza-ui { background: rgba(255, 240, 245, 0.7); padding: 20px; border: 1px dashed var(--primary-color); }
 #lalaparuza-title { color: var(--primary-color); font-size: 1.4em; margin-bottom: 15px;}
@@ -755,19 +952,98 @@ button:disabled::after { display: none; }
 #lalaparuza-winner-announcement { margin-top: 20px; font-size: 1.2em; font-weight: bold; text-align: center; }
 #lalaparuza-winner-announcement strong { color: var(--primary-color); }
 
-/* AS10 MQP UI Enhancements */
-#mqp-distribution-ui { background-color: #f8f8ff; border-color: var(--secondary-color); }
-#mqp-title { color: var(--secondary-color); }
-.choice-button-card.mqp-recipient img { border: 3px solid var(--secondary-color); }
-.mqp-card-points { position: absolute; bottom: 5px; right: 5px; background: var(--secondary-color); color: white; font-size: 0.8em; border-radius: 50%; width: 22px; height: 22px; line-height: 22px; text-align: center; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-.mqp-recipient.mqp-selected { border-color: var(--accent-color); background-color: #fff8e1; box-shadow: 0 0 10px var(--accent-color); }
-#mqp-donation-log { border-color: #c9b7e2; }
-#mqp-donation-log li { margin-bottom: 5px; font-size: 0.9em; }
-#mqp-donation-log .giver { color: var(--elim-color); font-weight: 600; }
-#mqp-donation-log .receiver { color: #2e7d32; font-weight: 600; }
-#mqp-donor-info .giver-name { color: var(--primary-color); font-weight: bold; font-size: 1.1em; }
-#mqp-donor-info .receiver { color: #388e3c; font-weight: bold; font-size: 1.05em; }
+/* --- ADD THESE STYLES FOR AS10 MQP Choice Cards --- */
 
+/* Target the container holding the MQP choice cards */
+#mqp-choice-options {
+    display: flex; /* Use flexbox for layout */
+    flex-wrap: wrap; /* Allow cards to wrap to the next line */
+    justify-content: center; /* Center cards horizontally */
+    gap: 10px; /* Reduced gap between cards */
+    padding: 15px 0; /* Add some padding */
+    max-height: 250px; /* Limit height and allow scrolling if needed */
+    overflow-y: auto; /* Enable vertical scrolling if needed */
+     border: 1px dashed #d1c4e9; /* Light border */
+     border-radius: var(--border-radius-small);
+     background-color: rgba(255, 255, 255, 0.6); /* Slight background */
+}
+
+/* Override styles for cards specifically in the MQP context */
+#mqp-distribution-ui .choice-button-card.mqp-recipient {
+    width: 100px; /* Significantly smaller width */
+    min-height: 140px; /* Reduced minimum height */
+    padding: 10px 5px 5px 5px; /* Adjust padding */
+    border-width: 2px; /* Keep border consistent */
+    cursor: default; /* Not clickable (display only) */
+    box-shadow: 0 2px 4px var(--shadow-color-light); /* Lighter shadow */
+    transform: none !important; /* Prevent hover transform */
+}
+/* No hover effect needed for MQP recipients */
+#mqp-distribution-ui .choice-button-card.mqp-recipient:hover {
+    border-color: var(--border-color); /* Reset border color */
+    box-shadow: 0 2px 4px var(--shadow-color-light); /* Reset shadow */
+    transform: none;
+}
+
+/* Adjust image size within MQP cards */
+#mqp-distribution-ui .choice-button-card.mqp-recipient .card-main-info img {
+    width: 60px; /* Smaller image */
+    height: 60px; /* Smaller image */
+    margin-bottom: 8px; /* Adjust margin */
+    border-width: 2px; /* Thinner border */
+    transform: none !important; /* Prevent hover transform */
+}
+
+/* Adjust name font size and position */
+#mqp-distribution-ui .choice-button-card.mqp-recipient .name-score-group {
+    margin-bottom: 5px; /* Less margin */
+}
+#mqp-distribution-ui .choice-button-card.mqp-recipient .queen-name {
+    font-size: 0.9em; /* Smaller font */
+    line-height: 1.2; /* Adjust line height */
+    margin-top: 5px; /* Add a little space above */
+    padding: 0 2px; /* Less horizontal padding */
+    display: block; /* Ensure block display */
+}
+
+/* Adjust the points bubble positioning */
+#mqp-distribution-ui .mqp-card-points {
+    position: absolute;
+    bottom: 3px; /* Adjusted position */
+    right: 3px;  /* Adjusted position */
+    width: 20px;
+    height: 20px;
+    font-size: 0.75em;
+    line-height: 20px;
+}
+
+/* Override the selected state visual - make it less pronounced or different */
+#mqp-distribution-ui .mqp-recipient.mqp-selected {
+    border-color: var(--secondary-color); /* Purple border for selection */
+    background-color: #f2e6ff; /* Very light purple background */
+    box-shadow: 0 0 8px rgba(106, 13, 173, 0.3); /* Purple glow */
+    transform: none; /* Prevent scaling */
+}
+
+/* Style the Donor/Recipient info text */
+#mqp-donor-info-wrapper {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: var(--border-radius-small);
+    border: 1px solid var(--border-color);
+}
+#mqp-donor-info {
+    font-size: 1.15em;
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+#mqp-recipient-info {
+     font-size: 0.9em;
+     color: #666;
+     margin-top: 5px;
+     font-style: italic;
+}
 /* Center content utility class */
 .center-content {
     display: flex;

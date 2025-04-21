@@ -136,6 +136,23 @@
             <section class="main-challenge-area">
                 <h3 id="challenge-announcement">Challenge: Awaiting Assignment...</h3>
                 <p id="challenge-description" class="hidden"></p> <!-- For challenge descriptions -->
+                <!-- === (PLACE NEW MODAL STRUCTURE HERE) === -->
+             <!-- == AS10 Merge Qualifier Announcement Modal == -->
+             <div id="merge-qualifier-popup" class="modal-overlay hidden">
+                <div class="modal-content merge-announcement-box">
+                    <h3 id="merge-qualifier-title"><span id="merge-qualifier-group-name">Group X</span> Qualifiers!</h3>
+                    <p class="merge-description">Condragulations! The following queens earned the most My Queen Points in their group and have qualified for the merge:</p>
+                    <div id="merge-qualifier-cards" class="qualifier-card-grid">
+                        <!-- Qualifying queen cards loaded here by JS -->
+                    </div>
+                    <p class="merge-description footnote">The remaining queens from this group will compete in the LaLaPaRUza for a chance to return!</p>
+                    <div class="modal-actions">
+                        <button id="confirm-merge-qualifiers" class="action-button">Continue Simulation</button>
+                   </div>
+               </div>
+            </div>
+           <!-- ========================================== -->
+
             </section>
 <!-- RuPaul Low Save Choice (NEW UI) -->
 <div id="rupaul-low-save-selection" class="interaction-box ru-interaction-box hidden">
