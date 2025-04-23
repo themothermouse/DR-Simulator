@@ -939,20 +939,152 @@ button:disabled::after { display: none; }
 .modal-actions {
     margin-top: 30px;
 }
-/* Styles for LaLaPaRUza UI inside LipSync Box */
-#lalaparuza-ui { background: rgba(255, 240, 245, 0.7); padding: 20px; border: 1px dashed var(--primary-color); }
-#lalaparuza-title { color: var(--primary-color); font-size: 1.4em; margin-bottom: 15px;}
-#lalaparuza-round-display { margin-bottom: 15px; padding-right: 10px; max-height: 300px; overflow-y: auto; } /* Added max-height/overflow */
-.lalaparuza-matchup { display: flex; justify-content: center; align-items: center; margin-bottom: 10px; padding: 8px; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.9em;}
-.lalaparuza-matchup .queen-name { display: flex; align-items: center; gap: 6px; flex-basis: 40%; text-align: center; justify-content: center;}
-.lalaparuza-matchup .queen-img-small { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; }
-.lalaparuza-matchup .vs { font-weight: 700; color: var(--secondary-color); padding: 0 10px; flex-shrink: 0;}
-.lalaparuza-matchup .matchup-winner { font-weight: 700; color: #1e8449; }
-.lalaparuza-matchup .matchup-loser { text-decoration: line-through; color: #999; opacity: 0.8;}
-#lalaparuza-winner-announcement { margin-top: 20px; font-size: 1.2em; font-weight: bold; text-align: center; }
-#lalaparuza-winner-announcement strong { color: var(--primary-color); }
+/* --- Styles for LaLaPaRUza UI inside LipSync Box --- */
+/* LaLaPaRUza Controls */
+#lalaparuza-controls {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px dashed var(--border-color);
+}
 
-/* --- ADD THESE STYLES FOR AS10 MQP Choice Cards --- */
+#lalaparuza-next-step-button {
+    padding: 10px 25px; /* Slightly larger than default small */
+    font-size: 0.95em;
+}
+
+#lalaparuza-ui { /* Adjust existing interaction-box */
+    background: rgba(255, 240, 245, 0.8); /* Semi-transparent pink background */
+    padding: 25px;
+    border: 2px dashed var(--primary-color); /* Dashed pink border */
+    margin-top: 15px; /* Add some space above if needed */
+    box-shadow: 0 4px 12px rgba(230, 0, 126, 0.15); /* Lighter shadow */
+}
+#lalaparuza-title {
+    color: var(--primary-color); /* Pink title */
+    font-size: 1.6em; /* Slightly larger title */
+    margin-bottom: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+#lalaparuza-round-display {
+    margin-bottom: 15px;
+    padding-right: 10px;
+    max-height: 350px; /* Increased max height */
+    overflow-y: auto;
+    border-radius: 6px;
+    border: 1px solid #ffe0f0;
+    background-color: rgba(255, 255, 255, 0.7); /* Make slightly more opaque */
+}
+/* Style for round headers inside the display */
+#lalaparuza-round-display h5 {
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: 700;
+    color: var(--secondary-color); /* Purple for round headers */
+    padding: 10px 0;
+    margin: 10px 0 15px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(245, 245, 255, 0.5); /* Light purple tint */
+    position: sticky; /* Keep round headers visible */
+    top: -10px; /* Adjust based on padding */
+    z-index: 1;
+}
+
+.lalaparuza-matchup {
+    display: flex;
+    justify-content: center; /* Align items horizontally center */
+    align-items: center;
+    margin: 0 auto 12px auto; /* Centered with bottom margin */
+    padding: 10px 15px;
+    background: white;
+    border-radius: var(--border-radius-small);
+    box-shadow: 0 2px 5px var(--shadow-color-light);
+    font-size: 0.95em;
+    max-width: 90%; /* Prevent overly wide matchups */
+    transition: box-shadow 0.2s ease;
+}
+.lalaparuza-matchup:hover {
+    box-shadow: 0 4px 8px var(--shadow-color-medium);
+}
+
+/* Adjusted flex basis for better centering */
+.lalaparuza-matchup .queen-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-basis: 42%; /* Adjust percentage */
+    text-align: left; /* Align name text left */
+    justify-content: flex-start; /* Justify towards start */
+    line-height: 1.3;
+}
+/* Ensure the second queen is aligned to the right */
+.lalaparuza-matchup .queen-name:last-of-type {
+    text-align: right; /* Align name text right */
+    justify-content: flex-end; /* Justify towards end */
+}
+
+.lalaparuza-matchup .queen-img-small {
+    width: 32px; /* Slightly larger */
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eee;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.lalaparuza-matchup .vs {
+    font-weight: 700;
+    color: var(--secondary-color);
+    font-size: 1.4em; /* Slightly smaller VS */
+    padding: 0 12px; /* Adjusted padding */
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.lalaparuza-matchup .matchup-winner {
+    font-weight: 700;
+    color: #28a745; /* Green for winner */
+}
+.lalaparuza-matchup .matchup-winner .queen-img-small {
+    border-color: #28a745; /* Green border */
+}
+.lalaparuza-matchup .matchup-loser {
+    text-decoration: line-through;
+    color: #a9a9a9; /* Darker gray */
+    opacity: 0.75; /* Slightly less opaque */
+}
+.lalaparuza-matchup .matchup-loser .queen-img-small {
+    opacity: 0.6;
+    filter: grayscale(50%);
+}
+
+/* Style for bye message */
+#lalaparuza-round-display p em {
+    display: block;
+    text-align: center;
+    font-style: italic;
+    color: #666;
+    padding: 8px 0;
+    margin: 5px 0 15px 0;
+    font-size: 0.9em;
+}
+
+#lalaparuza-winner-announcement {
+    margin-top: 20px;
+    font-size: 1.3em; /* Larger announcement */
+    font-weight: bold;
+    text-align: center;
+    color: var(--secondary-color);
+    padding: 12px;
+    background-color: #e8e0ff;
+    border-radius: 5px;
+    border: 1px solid var(--secondary-color);
+}
+#lalaparuza-winner-announcement strong {
+    color: var(--primary-color); /* Winner name in pink */
+    font-size: 1.1em; /* Make name slightly bigger */
+}/* --- ADD THESE STYLES FOR AS10 MQP Choice Cards --- */
 
 /* Target the container holding the MQP choice cards */
 #mqp-choice-options {
@@ -1050,4 +1182,115 @@ button:disabled::after { display: none; }
     justify-content: center;
     align-items: center;
     flex-direction: column; /* Stack elements vertically if needed */
+}
+/* --- AS10 Group Reveal Screen Styles --- */
+#as10-group-reveal-screen .screen-header h2 {
+    color: var(--secondary-color);
+}
+
+.group-reveal-container {
+    display: flex;
+    gap: 25px;
+    margin-top: 30px;
+    margin-bottom: 40px;
+    justify-content: space-around; /* Distribute space */
+}
+
+.group-column {
+    flex: 1; /* Each column takes equal space */
+    min-width: 0; /* Allows flex items to shrink */
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: var(--border-radius);
+    padding: 20px 15px;
+    border: 1px solid var(--border-color);
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.group-column h4 {
+    font-size: 1.4em;
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid;
+    font-weight: 700;
+    display: flex; /* Align icon and text */
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.group-column.group-a h4 { border-color: #ff69b4; color: #ff69b4; } /* Pink */
+.group-column.group-b h4 { border-color: #87ceeb; color: #87ceeb; } /* Sky Blue */
+.group-column.group-c h4 { border-color: #90ee90; color: #90ee90; } /* Light Green */
+
+.reveal-cards-container {
+    display: flex;
+    flex-direction: column; /* Stack cards vertically */
+    gap: 12px; /* Space between cards */
+    max-height: 45vh; /* Limit height */
+    overflow-y: auto; /* Add scroll if needed */
+    padding-right: 5px; /* Space for scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--secondary-color) var(--background-end);
+}
+.reveal-cards-container::-webkit-scrollbar { width: 6px; }
+.reveal-cards-container::-webkit-scrollbar-track { background: transparent; }
+.reveal-cards-container::-webkit-scrollbar-thumb { background-color: var(--secondary-color); border-radius: 3px; }
+
+
+.reveal-queen-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--card-bg);
+    padding: 8px 10px;
+    border-radius: var(--border-radius-small);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px var(--shadow-color-light);
+    width: 100%; /* Take full width of column */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.reveal-queen-card:hover {
+    transform: translateX(3px);
+    box-shadow: 0 4px 8px var(--shadow-color-medium);
+}
+
+.reveal-queen-card img {
+    width: 45px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-right: 12px;
+    border: 2px solid #eee;
+    flex-shrink: 0; /* Prevent image shrinking */
+}
+
+.reveal-queen-card span {
+    font-weight: 500;
+    font-size: 1.0em;
+    color: var(--text-color);
+    line-height: 1.3;
+    text-align: left; /* Align name to the left */
+}
+
+/* Style the continue button */
+#confirm-group-reveal-button .arrow {
+    display: inline-block;
+    transition: transform 0.2s ease-out;
+    margin-left: 5px;
+}
+#confirm-group-reveal-button:hover .arrow {
+    transform: translateX(4px);
+}
+
+/* Responsive adjustment for smaller screens if needed */
+@media (max-width: 768px) {
+    .group-reveal-container {
+        flex-direction: column; /* Stack columns vertically */
+        gap: 20px;
+    }
+    .reveal-cards-container {
+        max-height: none; /* Remove height limit when stacked */
+        overflow-y: visible;
+    }
 }

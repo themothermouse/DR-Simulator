@@ -109,6 +109,47 @@
                  <button id="start-season-button" class="action-button" disabled>Start Season</button>
             </footer>
         </div> <!-- End Setup Screen -->
+         <!-- ================================ -->
+        <!-- ==== AS10 Group Reveal Screen ==== -->
+        <!-- ================================ -->
+        <div id="as10-group-reveal-screen" class="screen hidden">
+            <div class="screen-header">
+                <h2>All Stars 10 - Group Assignments</h2>
+                <p>Get ready, racers! The Tournament of All Stars begins! Here's how the 18 All Stars are divided.</p>
+            </div>
+
+            <div class="group-reveal-container">
+                <!-- Group A Column -->
+                <div class="group-column group-a">
+                    <h4><span class="icon">🅰️</span> Group A</h4>
+                    <div id="group-a-display" class="reveal-cards-container">
+                        <!-- Group A cards populated here -->
+                    </div>
+                </div>
+
+                <!-- Group B Column -->
+                <div class="group-column group-b">
+                    <h4><span class="icon">🅱️</span> Group B</h4>
+                    <div id="group-b-display" class="reveal-cards-container">
+                        <!-- Group B cards populated here -->
+                    </div>
+                </div>
+
+                <!-- Group C Column -->
+                <div class="group-column group-c">
+                    <h4><span class="icon">🅲️</span> Group C</h4>
+                    <div id="group-c-display" class="reveal-cards-container">
+                        <!-- Group C cards populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <footer class="screen-footer navigation-buttons">
+                <button id="confirm-group-reveal-button" class="action-button">
+                    Continue to Episode 1 <span class="arrow">➡️</span>
+                </button>
+           </footer>
+        </div> <!-- End AS10 Group Reveal Screen -->
 
 
         <!-- ==================== -->
@@ -246,56 +287,66 @@
             </div>
 
 
-            <!-- Lipsync / LaLa / Outcome Area -->
-            <div id="lipsync-info" class="interaction-box hidden">
-                <h3 id="lipsync-title" class="interaction-title"><span class="icon">🎤</span> Lipsync For Your...!</h3>
+<!-- Lipsync / LaLa / Outcome Area -->
+<div id="lipsync-info" class="interaction-box hidden">
+    <h3 id="lipsync-title" class="interaction-title"><span class="icon">🎤</span> Lipsync For Your...!</h3>
 
-                <!-- LaLaPaRuza nested inside for context -->
-                <div id="lalaparuza-ui" class="interaction-box hidden" style="background: #fff;"> {/* Style slightly different if needed */}
-                    <h3 id="lalaparuza-title" class="interaction-title"><span class="icon">💥</span> LaLaPaRUza Smackdown!</h3>
-                    <div id="lalaparuza-round-display" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
-                        <!-- Matchup results populated here -->
-                    </div>
-                    <p id="lalaparuza-winner-announcement" class="final-outcome-text"></p>
-                </div>
+<!-- === START: LaLaPaRuza UI === -->
+<div id="lalaparuza-ui" class="interaction-box hidden" style="background: rgba(255, 240, 245, 0.8); border: 1px solid var(--primary-color);"> {/* Nested style for distinction */}
+    <h3 id="lalaparuza-title" class="interaction-title"><span class="icon">💥</span> LaLaPaRUza Smackdown!</h3>
+    <div id="lalaparuza-round-display" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.6); border-radius: 6px;">
+        <!-- Matchup results populated here by JS -->
+    </div>
+    <p id="lalaparuza-winner-announcement" class="final-outcome-text" style="font-weight: 700; margin-top: 15px;"></p>
 
-                <!-- Contestants Display (LSFYL, LSFYLegacy) -->
-                <div id="lipsync-contestants" class="choice-card-container vs-container" style="margin-top: 15px;">
-                    <!-- Contestant cards loaded here -->
-                </div>
+    <!-- === START: Add Next Step Button === -->
+    <div id="lalaparuza-controls" class="interaction-options center-content hidden">
+        <button id="lalaparuza-next-step-button" class="control-button secondary small-button">
+            Next Lipsync
+        </button>
+    </div>
+    <!-- === END: Add Next Step Button === -->
 
-                <!-- All Stars Specific: LSFYL Winner Announce -->
-                <div id="lsfyl-winner-announcement" class="announcement-box hidden">
-                   <p>The Winner of the Lipsync For Your Legacy is...</p>
-                   <p class="winner-name"><span id="lsfyl-winner-name"></span>!</p>
-                </div>
+</div>
+<!-- === END: LaLaPaRuza UI === -->
 
-                <!-- All Stars Specific: Elimination Choice -->
-               <div id="allstars-elimination-choice" class="sub-interaction-box hidden">
-                   <h4 class="interaction-title small-title"><span id="allstars-chooser-name">Winner</span>, who gets the chop?</h4>
-                   <div id="elimination-choice-options" class="choice-card-container slim-gap">
-                       <!-- Bottom queen cards for elimination choice -->
-                   </div>
-                   <div class="center-content interaction-options">
-                        <button id="confirm-allstars-elim-button" class="control-button elim-button">Confirm Elimination</button>
-                   </div>
-               </div>
 
-               <!-- Normal Mode LSFYL: RuPaul Decision -->
-                <div id="rupaul-decision" class="sub-interaction-box hidden">
-                    <h4 class="interaction-title small-title">RuPaul, make your decision...</h4>
-                    <div id="lipsync-choice-options" class="choice-card-container slim-gap">
-                        <!-- Shantay choice cards loaded here -->
-                    </div>
-                    <div id="double-shantay-option" class="center-content interaction-options">
-                        <!-- Double Shantay button loaded here -->
-                    </div>
-                </div>
+    <!-- Contestants Display (LSFYL, LSFYLegacy) -->
+    <div id="lipsync-contestants" class="choice-card-container vs-container" style="margin-top: 15px;">
+        <!-- Contestant cards loaded here -->
+    </div>
 
-                <!-- Universal Lipsync Outcome Text -->
-                <p id="lipsync-result-text" class="final-outcome-text" style="margin-top: 20px;"></p>
-            </div>
+    <!-- All Stars Specific: LSFYL Winner Announce -->
+    <div id="lsfyl-winner-announcement" class="announcement-box hidden">
+       <p>The Winner of the Lipsync For Your Legacy is...</p>
+       <p class="winner-name"><span id="lsfyl-winner-name"></span>!</p>
+    </div>
 
+   <!-- All Stars Specific: Elimination Choice -->
+   <div id="allstars-elimination-choice" class="sub-interaction-box hidden">
+       <h4 class="interaction-title small-title"><span id="allstars-chooser-name">Winner</span>, who gets the chop?</h4>
+       <div id="elimination-choice-options" class="choice-card-container slim-gap">
+           <!-- Bottom queen cards for elimination choice -->
+       </div>
+       <div class="center-content interaction-options">
+            <button id="confirm-allstars-elim-button" class="control-button elim-button">Confirm Elimination</button>
+       </div>
+   </div>
+
+   <!-- Normal Mode LSFYL: RuPaul Decision -->
+    <div id="rupaul-decision" class="sub-interaction-box hidden">
+        <h4 class="interaction-title small-title">RuPaul, make your decision...</h4>
+        <div id="lipsync-choice-options" class="choice-card-container slim-gap">
+            <!-- Shantay choice cards loaded here -->
+        </div>
+        <div id="double-shantay-option" class="center-content interaction-options">
+            <!-- Double Shantay button loaded here -->
+        </div>
+    </div>
+
+    <!-- Universal Lipsync Outcome Text -->
+    <p id="lipsync-result-text" class="final-outcome-text" style="margin-top: 20px;"></p>
+</div>
             <!-- General Episode Outcome Text -->
             <p id="outcome-text" class="final-outcome-text episode-outcome hidden"></p>
 
